@@ -1,0 +1,23 @@
+version: '3.1'
+services:
+  db:
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: "no"
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+    volumes: 
+      - ./bbdd.sql:/docker-entrypoint-initdb.d/bbdd.sql
+    ports:
+      - 33306:3306
+    networks:
+      - skynet
+  adminer:
+    image: adminer
+    restart: "no"
+    ports:
+      - 8181:8080
+    networks:
+      - skynet    
+networks:
+  skynet:

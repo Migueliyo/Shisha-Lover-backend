@@ -1,0 +1,33 @@
+{
+  "name": "shisha-lover",
+  "version": "1.0.0",
+  "description": "Web/mobile application about shisha flavours, mixes and community of shisha lovers",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node --watch app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Migueliyo/Shisha-Lover.git"
+  },
+  "keywords": [
+    "shisha",
+    "Migueliyo",
+    "flavours",
+    "mixes"
+  ],
+  "author": "Migueliyo",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Migueliyo/Shisha-Lover/issues"
+  },
+  "homepage": "https://github.com/Migueliyo/Shisha-Lover#readme",
+  "dependencies": {
+    "cors": "2.8.5",
+    "express": "4.18.2",
+    "mysql2": "3.6.1",
+    "zod": "3.22.4"
+  }
+}

@@ -1,0 +1,29 @@
+### Recuperar todos las sabores
+GET http://localhost:1234/flavours
+
+### Recuperar un sabor por id
+GET http://localhost:1234/flavours/1
+
+### Recuperar todos las sabores por una marca
+GET http://localhost:1234/flavours?brand=SERBETLI
+
+### Crear un sabor con POST
+POST http://localhost:1234/flavours
+Content-Type: application/json
+
+{
+  "name": "Lemmer",
+  "description": "Mermelada de limón",
+  "brand": "Serbetli"
+}
+
+### Actualizar los datos de un sabor
+PATCH http://localhost:1234/flavours/14
+Content-Type: application/json
+
+{
+  "description": "Mermelada de limón y menta"
+}
+
+### Borrar un sabor
+DELETE http://localhost:1234/flavours/14
