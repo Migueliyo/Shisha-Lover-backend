@@ -1,10 +1,10 @@
-### Recuperar todos las sabores
+### Recuperar todos los sabores
 GET http://localhost:1234/flavours
 
 ### Recuperar un sabor por id
 GET http://localhost:1234/flavours/1
 
-### Recuperar todos las sabores por una marca
+### Recuperar todos los sabores por una marca
 GET http://localhost:1234/flavours?brand=SERBETLI
 
 ### Crear un sabor con POST
@@ -18,7 +18,7 @@ Content-Type: application/json
 }
 
 ### Actualizar los datos de un sabor
-PATCH http://localhost:1234/flavours/14
+PATCH http://localhost:1234/flavours/5
 Content-Type: application/json
 
 {
@@ -26,4 +26,60 @@ Content-Type: application/json
 }
 
 ### Borrar un sabor
-DELETE http://localhost:1234/flavours/14
+DELETE http://localhost:1234/flavours/5
+
+#####################################################################
+
+### Recuperar todas las mezclas
+GET http://localhost:1234/mixes
+
+### Recuperar una mezcla por id
+GET http://localhost:1234/mixes/16
+
+### Recuperar todas las mezclas por un tipo
+GET http://localhost:1234/mixes?type=afrutada
+
+### Crear una mezcla con POST
+POST http://localhost:1234/mixes
+Content-Type: application/json
+
+{
+  "name": "Mezcla favorita 89",
+  "type": "Afrutada",
+  "mix_flavours": [
+    {
+      "flavour_name": "Jungle",
+      "percentage": 33
+    },
+    {
+      "flavour_name": "Richman",
+      "percentage": 33
+    },
+    {
+      "flavour_name": "Forever",
+      "percentage": 34
+    }
+  ]
+}
+
+### Actualizar los datos de una mezcla
+PUT http://localhost:1234/mixes/18
+Content-Type: application/json
+
+{
+  "name": "Mezcla favorita 78",
+  "type": "Dulce",
+  "mix_flavours": [
+    {
+      "flavour_name": "Jungle",
+      "percentage": 70
+    },
+    {
+      "flavour_name": "Forever",
+      "percentage": 30
+    }
+  ]
+}
+
+### Borrar una mezcla
+DELETE http://localhost:1234/mixes/18

@@ -1,6 +1,8 @@
 -- Creación de la base de datos
 DROP DATABASE IF EXISTS shishadb;
-CREATE DATABASE shishadb;
+CREATE DATABASE shishadb
+CHARACTER SET utf8
+COLLATE utf8_general_ci;
 
 -- Usar
 USE shishadb;
@@ -33,8 +35,8 @@ CREATE TABLE users (
 -- Creación de la tabla mezclas de sabores
 CREATE TABLE mixes (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    description VARCHAR(255)
+    name VARCHAR(255) NOT NULL UNIQUE,
+    type ENUM('Dulce', 'Cítrica', 'Afrutada', 'Mentolada') NOT NULL
 );
 
 -- Creación de la tabla mezcla de los sabores donde almacenaré
@@ -58,3 +60,11 @@ INSERT INTO flavours (name, description, brand_id) VALUES ("Jungle", "Frutas tro
 INSERT INTO flavours (name, description, brand_id) VALUES ("Richman", "Helado de frambuesa", (SELECT id FROM brands WHERE name="Taboo"));
 INSERT INTO flavours (name, description, brand_id) VALUES ("Forever", "Arándanos, frambuesa, lima y cereza", (SELECT id FROM brands WHERE name="Neo"));
 INSERT INTO flavours (name, description, brand_id) VALUES ("Maca Roll", "Dulce macaron", (SELECT id FROM brands WHERE name="Serbetli"));
+
+INSERT INTO mixes (name, type) VALUES ("Mezcla 1", "Afrutada");
+INSERT INTO mix_flavours (mix_id, flavour_id, percentage) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 1"), (SELECT id FROM flavours WHERE name = "Richman"), 50);
+INSERT INTO mix_flavours (mix_id, flavour_id, percentage) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 1"), (SELECT id FROM flavours WHERE name = "Forever"), 50);
+
+INSERT INTO mixes (name, type) VALUES ("Mezcla 2", "Dulce");
+INSERT INTO mix_flavours (mix_id, flavour_id, percentage) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 2"), (SELECT id FROM flavours WHERE name = "Maca Roll"), 50);
+INSERT INTO mix_flavours (mix_id, flavour_id, percentage) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 2"), (SELECT id FROM flavours WHERE name = "Jungle"), 50);
