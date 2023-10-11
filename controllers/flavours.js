@@ -19,15 +19,19 @@ export class FlavourController {
   }
 
   create = async (req, res) => {
-    const result = validateFlavour(req.body)
+    try {
+      const result = validateFlavour(req.body)
 
-    if (!result.success) {
-      return res.status(400).json({ error: JSON.parse(result.error.message) })
+      if (!result.success) {
+        return res.status(400).json({ error: JSON.parse(result.error.message) })
+      }
+
+      const newFlavour = await this.flavourModel.create({ input: result.data })
+
+      res.status(201).json(newFlavour)
+    } catch (error) {
+      res.status(400).json({ message: error.message })
     }
-
-    const newFlavour = await this.flavourModel.create({ input: result.data })
-
-    res.status(201).json(newFlavour)
   }
 
   delete = async (req, res) => {
@@ -43,16 +47,20 @@ export class FlavourController {
   }
 
   update = async (req, res) => {
-    const result = validatePartialFlavour(req.body)
+    try {
+      const result = validatePartialFlavour(req.body)
 
-    if (!result.success) {
-      return res.status(400).json({ error: JSON.parse(result.error.message) })
+      if (!result.success) {
+        return res.status(400).json({ error: JSON.parse(result.error.message) })
+      }
+  
+      const { id } = req.params
+  
+      const updatedFlavour = await this.flavourModel.update({ id, input: result.data })
+  
+      return res.json(updatedFlavour)
+    } catch (error) {
+      res.status(400).json({ message: error.message })
     }
-
-    const { id } = req.params
-
-    const updatedFlavour = await this.flavourModel.update({ id, input: result.data })
-
-    return res.json(updatedFlavour)
   }
 }
