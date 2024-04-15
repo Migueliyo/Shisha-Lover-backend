@@ -1,8 +1,8 @@
 -- Creación de la base de datos
 DROP DATABASE IF EXISTS shishadb;
 CREATE DATABASE shishadb
-CHARACTER SET utf8
-COLLATE utf8_general_ci;
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
 
 -- Usar
 USE shishadb;
@@ -23,20 +23,22 @@ CREATE TABLE flavours (
 
 -- Creación de la tabla usuarios
 CREATE TABLE users (
-    user_id CHAR(36) NOT NULL PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
-    password CHAR(32) NOT NULL,
+    password CHAR(60) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
+    disabled BOOLEAN NOT NULL DEFAULT (false),
     created_at TIMESTAMP NOT NULL DEFAULT (NOW())
 );
 
 -- Creación de la tabla mezclas de sabores
 CREATE TABLE mixes (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL UNIQUE,
-    type ENUM('Dulce', 'Cítrica', 'Afrutada', 'Mentolada') NOT NULL
+    user_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
 -- Creación de la tabla mezcla de los sabores donde almacenaré
@@ -51,6 +53,22 @@ CREATE TABLE mix_flavours (
     FOREIGN KEY (flavour_id) REFERENCES flavours(id)
 );
 
+-- Creación de la tabla categorías
+CREATE TABLE categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+);
+
+-- Creación de la tabla categoría de las mezclas donde 
+-- almacenaré las categorías asociadas en la mezcla
+CREATE TABLE mix_categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    mix_id INT,
+    category_id INT,
+    FOREIGN KEY (mix_id) REFERENCES mixes(id),
+    FOREIGN KEY (category_id) REFERENCES categories(id)
+);
+
 -- Introduciendo algunos datos
 INSERT INTO brands (name) VALUES ("Taboo");
 INSERT INTO brands (name) VALUES ("Neo");
@@ -58,13 +76,23 @@ INSERT INTO brands (name) VALUES ("Serbetli");
 
 INSERT INTO flavours (name, description, brand_id) VALUES ("Jungle", "Frutas tropicales con hielo", (SELECT id FROM brands WHERE name="Taboo"));
 INSERT INTO flavours (name, description, brand_id) VALUES ("Richman", "Helado de frambuesa", (SELECT id FROM brands WHERE name="Taboo"));
-INSERT INTO flavours (name, description, brand_id) VALUES ("Forever", "Arándanos, frambuesa, lima y cereza", (SELECT id FROM brands WHERE name="Neo"));
+INSERT INTO flavours (name, description, brand_id) VALUES ("Forever", "Arandanos, frambuesa, lima y cereza", (SELECT id FROM brands WHERE name="Neo"));
 INSERT INTO flavours (name, description, brand_id) VALUES ("Maca Roll", "Dulce macaron", (SELECT id FROM brands WHERE name="Serbetli"));
 
-INSERT INTO mixes (name, type) VALUES ("Mezcla 1", "Afrutada");
+INSERT INTO categories (name) VALUES ("Afrutada");
+INSERT INTO categories (name) VALUES ("Dulce");
+INSERT INTO categories (name) VALUES ("Mentolada");
+
+INSERT INTO users (username, password, first_name, last_name, email) VALUES ("migueliyo", "$2b$10$kPuJL7S/2dsvt1pUdxoiqujpbHT9VUeSBAry2iYDdu/bafVspfjpu", "Miguel", "Colmenero", "miguel@gmail.com");
+
+INSERT INTO mixes (user_id, name) VALUES ((SELECT id FROM users WHERE username = "migueliyo"), "Mezcla 1");
 INSERT INTO mix_flavours (mix_id, flavour_id, percentage) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 1"), (SELECT id FROM flavours WHERE name = "Richman"), 50);
 INSERT INTO mix_flavours (mix_id, flavour_id, percentage) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 1"), (SELECT id FROM flavours WHERE name = "Forever"), 50);
+INSERT INTO mix_categories (mix_id, category_id) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 1"), (SELECT id FROM categories WHERE name = "Afrutada"));
+INSERT INTO mix_categories (mix_id, category_id) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 1"), (SELECT id FROM categories WHERE name = "Dulce"));
 
-INSERT INTO mixes (name, type) VALUES ("Mezcla 2", "Dulce");
+INSERT INTO mixes (user_id, name) VALUES ((SELECT id FROM users WHERE username = "migueliyo"), "Mezcla 2");
 INSERT INTO mix_flavours (mix_id, flavour_id, percentage) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 2"), (SELECT id FROM flavours WHERE name = "Maca Roll"), 50);
 INSERT INTO mix_flavours (mix_id, flavour_id, percentage) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 2"), (SELECT id FROM flavours WHERE name = "Jungle"), 50);
+INSERT INTO mix_categories (mix_id, category_id) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 2"), (SELECT id FROM categories WHERE name = "Afrutada"));
+INSERT INTO mix_categories (mix_id, category_id) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 2"), (SELECT id FROM categories WHERE name = "Mentolada"));

@@ -25,9 +25,10 @@
   },
   "homepage": "https://github.com/Migueliyo/Shisha-Lover#readme",
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "cors": "2.8.5",
-    "express": "4.18.2",
-    "mysql2": "3.6.1",
+    "express": "^4.19.2",
+    "mysql2": "^3.9.4",
     "zod": "3.22.4"
   }
 }

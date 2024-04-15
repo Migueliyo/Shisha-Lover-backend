@@ -8,16 +8,24 @@ const mixFlavourSchema = z.object({
   percentage: z.number().int().min(0).max(100),
 })
 
+const mixCategorySchema = z.object({
+  category_name: z.string({
+    invalid_type_error: 'Category name must be a string',
+    required_error: 'Category name is required.',
+  }),
+})
+
 const mixSchema = z.object({
   name: z.string({
     invalid_type_error: 'Mix name must be a string',
     required_error: 'Mix name is required.',
   }),
-  type: z.enum(['Dulce', 'Cítrica', 'Afrutada', 'Mentolada'], {
-    invalid_type_error: 'Mix type must be a value of enum Type',
-    required_error: 'Mix type is required.',
+  username: z.string({
+    invalid_type_error: 'Username must be a string',
+    required_error: 'Username is required.',
   }),
   mix_flavours: z.array(mixFlavourSchema),
+  mix_categories: z.array(mixCategorySchema),
 }).refine((data) => {
   // Suma de porcentajes de sabores en la mezcla
   const totalPercentage = data.mix_flavours.reduce(

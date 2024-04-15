@@ -1,8 +1,8 @@
-version: '3.1'
+version: '1.0'
 services:
   db:
     image: mysql
-    command: --default-authentication-plugin=mysql_native_password
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci", "--default-authentication-plugin=caching_sha2_password"]
     restart: "no"
     environment:
       MYSQL_ROOT_PASSWORD: admin
