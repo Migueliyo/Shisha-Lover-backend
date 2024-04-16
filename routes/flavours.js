@@ -12,6 +12,7 @@ export const createFlavourRouter = ({ flavourModel }) => {
   flavourRouter.get('/:id', flavourController.getById)
   flavourRouter.delete('/:id', flavourController.delete)
   flavourRouter.patch('/:id', flavourController.update)
+  flavourRouter.put('/:id', flavourController.update)
 
   return flavourRouter
 }

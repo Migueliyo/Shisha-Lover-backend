@@ -11,6 +11,7 @@ export const createMixRouter = ({ mixModel }) => {
 
   mixRouter.get('/:id', mixController.getById)
   mixRouter.delete('/:id', mixController.delete)
+  mixRouter.patch('/:id', mixController.update)
   mixRouter.put('/:id', mixController.update)
 
   return mixRouter

@@ -1,5 +1,12 @@
 import z from 'zod'
 
+const flavourCategorySchema = z.object({
+  category_name: z.string({
+    invalid_type_error: 'Category name must be a string',
+    required_error: 'Category name is required.',
+  }),
+})
+
 const flavourSchema = z.object({
   name: z.string({
     invalid_type_error: 'Flavour name must be a string',
@@ -13,6 +20,7 @@ const flavourSchema = z.object({
     invalid_type_error: 'Flavour brand must be a string',
     required_error: 'Flavour brand is required.'
   }),
+  flavour_categories: z.array(flavourCategorySchema),
 })
 
 export function validateFlavour (input) {

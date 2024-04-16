@@ -74,7 +74,7 @@ export class MixModel {
 
   create = async ({ input }) => {
     const { name, username, mix_flavours, mix_categories } = input;
-  
+
     try {
       // Insertar la mezcla
       await connection.query(
@@ -82,14 +82,14 @@ export class MixModel {
           VALUES ((SELECT id FROM users WHERE username = ?), ?);`,
         [username, name]
       );
-  
+
       // Obtener el id de la mezcla recién insertada
       const [mixResult] = await connection.query(
         `SELECT id FROM mixes WHERE name = ?`,
         [name]
       );
       const mixId = mixResult[0].id;
-  
+
       // Insertar mix_flavours
       for (const mix_flavour of mix_flavours) {
         const { flavour_name, percentage } = mix_flavour;
@@ -99,7 +99,7 @@ export class MixModel {
           [mixId, flavour_name, percentage]
         );
       }
-  
+
       // Insertar mix_categories
       for (const mix_category of mix_categories) {
         const { category_name } = mix_category;
@@ -125,7 +125,7 @@ export class MixModel {
           [mixId, categoryId]
         );
       }
-  
+
       // Obtener la mezcla completa
       const [mixes] = await connection.query(
         `SELECT mixes.id, mixes.name AS mix_name, users.username AS username, 
@@ -141,13 +141,12 @@ export class MixModel {
         GROUP BY mixes.id;`,
         [mixId]
       );
-  
+
       return mixes;
     } catch (error) {
       throw new Error("Error creating a new mix: " + error);
     }
   };
-  
 
   delete = async ({ id }) => {
     try {
@@ -182,68 +181,83 @@ export class MixModel {
 
   update = async ({ id, input }) => {
     const { name, mix_flavours, mix_categories } = input;
-  
+
     try {
       const [existingMix] = await connection.query(
         "SELECT * FROM mixes WHERE id = ?",
         [id]
       );
-  
+
       if (existingMix.length === 0) {
         throw new Error("Mix not found");
       }
-  
-      // Actualizar el nombre de la mezcla
-      const [updateResult] = await connection.query(
-        "UPDATE mixes SET name = ? WHERE id = ?",
-        [name, id]
-      );
-  
-      // Eliminar todos los registros de mix_flavours para el mix_id dado
-      await connection.query("DELETE FROM mix_flavours WHERE mix_id = ?", [id]);
-  
-      // Insertar los nuevos registros de mix_flavours
-      for (const mix_flavour of mix_flavours) {
-        const { flavour_name, percentage } = mix_flavour;
-        await connection.query(
-          `INSERT INTO mix_flavours (mix_id, flavour_id, percentage)
-            VALUES (?, (SELECT id FROM flavours WHERE name = ?), ?)`,
-          [id, flavour_name, percentage]
+
+      let result1, result2, result3;
+
+      if (name != undefined) {
+        // Actualizar el nombre de la mezcla
+        [result1] = await connection.query(
+          "UPDATE mixes SET name = ? WHERE id = ?",
+          [name, id]
         );
       }
-  
-      // Eliminar todos los registros de mix_categories para el mix_id dado
-      await connection.query("DELETE FROM mix_categories WHERE mix_id = ?", [
-        id,
-      ]);
-  
-      // Insertar los nuevos registros de mix_categories
-      for (const mix_category of mix_categories) {
-        const { category_name } = mix_category;
-        // Verificar si la categoría ya existe
-        const [categoryResult] = await connection.query(
-          `SELECT id FROM categories WHERE name = ?`,
-          [category_name]
-        );
-        let categoryId;
-        if (categoryResult.length > 0) {
-          categoryId = categoryResult[0].id;
-        } else {
-          // Si la categoría no existe, insertarla y obtener su id
-          const [insertedCategory] = await connection.query(
-            `INSERT INTO categories (name) VALUES (?)`,
+
+      if (mix_flavours !== undefined) {
+        // Eliminar todos los registros de mix_flavours para el mix_id dado
+        await connection.query("DELETE FROM mix_flavours WHERE mix_id = ?", [
+          id,
+        ]);
+
+        // Insertar los nuevos registros de mix_flavours
+        for (const mix_flavour of mix_flavours) {
+          const { flavour_name, percentage } = mix_flavour;
+          [result2] = await connection.query(
+            `INSERT INTO mix_flavours (mix_id, flavour_id, percentage)
+            VALUES (?, (SELECT id FROM flavours WHERE name = ?), ?)`,
+            [id, flavour_name, percentage]
+          );
+        }
+      }
+
+      if (mix_categories !== undefined) {
+        // Eliminar todos los registros de mix_categories para el mix_id dado
+        await connection.query("DELETE FROM mix_categories WHERE mix_id = ?", [
+          id,
+        ]);
+
+        // Insertar los nuevos registros de mix_categories
+        for (const mix_category of mix_categories) {
+          const { category_name } = mix_category;
+          // Verificar si la categoría ya existe
+          const [categoryResult] = await connection.query(
+            `SELECT id FROM categories WHERE name = ?`,
             [category_name]
           );
-          categoryId = insertedCategory.insertId;
+          let categoryId;
+          if (categoryResult.length > 0) {
+            categoryId = categoryResult[0].id;
+          } else {
+            // Si la categoría no existe, insertarla y obtener su id
+            const [insertedCategory] = await connection.query(
+              `INSERT INTO categories (name) VALUES (?)`,
+              [category_name]
+            );
+            categoryId = insertedCategory.insertId;
+          }
+          // Insertar el enlace entre la mezcla y la categoría
+          [result3] = await connection.query(
+            `INSERT INTO mix_categories (mix_id, category_id) VALUES (?, ?)`,
+            [id, categoryId]
+          );
         }
-        // Insertar el enlace entre la mezcla y la categoría
-        await connection.query(
-          `INSERT INTO mix_categories (mix_id, category_id) VALUES (?, ?)`,
-          [id, categoryId]
-        );
       }
-  
-      if (updateResult.affectedRows > 0) {
+
+      // Verifica si se actualizó al menos una fila
+      if (
+        (result1 && result1.affectedRows > 0) ||
+        (result2 && result2.affectedRows > 0) ||
+        (result3 && result3.affectedRows > 0)
+      ) {
         // Obtener la mezcla completa utilizando su id actualizado
         const [mixes] = await connection.query(
           `SELECT mixes.id, mixes.name AS mix_name, users.username AS username, 
@@ -259,11 +273,12 @@ export class MixModel {
           GROUP BY mixes.id;`,
           [id]
         );
-        return mixes;
+        return mixes[0];
+      } else {
+        throw new Error("No data entered");
       }
     } catch (error) {
       throw new Error("Error updating the mix: " + error);
     }
   };
-  
 }

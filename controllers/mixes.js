@@ -1,4 +1,4 @@
-import { validateMix } from '../schemas/mix.js'
+import { validateMix, validatePartialMix } from '../schemas/mix.js'
 
 export class MixController {
   constructor ({ mixModel }) {
@@ -49,7 +49,7 @@ export class MixController {
 
   update = async (req, res) => {
     try {
-      const result = validateMix(req.body)
+      const result = validatePartialMix(req.body)
 
       if (!result.success) {
         return res.status(400).json({ error: JSON.parse(result.error.message) })

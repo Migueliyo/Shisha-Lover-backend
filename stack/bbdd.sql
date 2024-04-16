@@ -56,7 +56,7 @@ CREATE TABLE mix_flavours (
 -- Creación de la tabla categorías
 CREATE TABLE categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
+    name VARCHAR(50) UNIQUE NOT NULL
 );
 
 -- Creación de la tabla categoría de las mezclas donde 
@@ -69,18 +69,38 @@ CREATE TABLE mix_categories (
     FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
+-- Creación de la tabla categoría de los sabores donde 
+-- almacenaré las categorías asociadas al sabor
+CREATE TABLE flavour_categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    flavour_id INT,
+    category_id INT,
+    FOREIGN KEY (flavour_id) REFERENCES flavours(id),
+    FOREIGN KEY (category_id) REFERENCES categories(id)
+);
+
 -- Introduciendo algunos datos
 INSERT INTO brands (name) VALUES ("Taboo");
 INSERT INTO brands (name) VALUES ("Neo");
 INSERT INTO brands (name) VALUES ("Serbetli");
 
+INSERT INTO categories (name) VALUES ("Afrutado");
+INSERT INTO categories (name) VALUES ("Dulce");
+
 INSERT INTO flavours (name, description, brand_id) VALUES ("Jungle", "Frutas tropicales con hielo", (SELECT id FROM brands WHERE name="Taboo"));
 INSERT INTO flavours (name, description, brand_id) VALUES ("Richman", "Helado de frambuesa", (SELECT id FROM brands WHERE name="Taboo"));
 INSERT INTO flavours (name, description, brand_id) VALUES ("Forever", "Arandanos, frambuesa, lima y cereza", (SELECT id FROM brands WHERE name="Neo"));
 INSERT INTO flavours (name, description, brand_id) VALUES ("Maca Roll", "Dulce macaron", (SELECT id FROM brands WHERE name="Serbetli"));
+INSERT INTO flavour_categories (flavour_id, category_id) VALUES ((SELECT id FROM flavours WHERE name = "Jungle"), (SELECT id FROM categories WHERE name = "Afrutado"));
+INSERT INTO flavour_categories (flavour_id, category_id) VALUES ((SELECT id FROM flavours WHERE name = "Jungle"), (SELECT id FROM categories WHERE name = "Dulce"));
+INSERT INTO flavour_categories (flavour_id, category_id) VALUES ((SELECT id FROM flavours WHERE name = "Richman"), (SELECT id FROM categories WHERE name = "Afrutado"));
+INSERT INTO flavour_categories (flavour_id, category_id) VALUES ((SELECT id FROM flavours WHERE name = "Richman"), (SELECT id FROM categories WHERE name = "Dulce"));
+INSERT INTO flavour_categories (flavour_id, category_id) VALUES ((SELECT id FROM flavours WHERE name = "Forever"), (SELECT id FROM categories WHERE name = "Afrutado"));
+INSERT INTO flavour_categories (flavour_id, category_id) VALUES ((SELECT id FROM flavours WHERE name = "Forever"), (SELECT id FROM categories WHERE name = "Dulce"));
+INSERT INTO flavour_categories (flavour_id, category_id) VALUES ((SELECT id FROM flavours WHERE name = "Maca Roll"), (SELECT id FROM categories WHERE name = "Afrutado"));
+INSERT INTO flavour_categories (flavour_id, category_id) VALUES ((SELECT id FROM flavours WHERE name = "Maca Roll"), (SELECT id FROM categories WHERE name = "Dulce"));
 
 INSERT INTO categories (name) VALUES ("Afrutada");
-INSERT INTO categories (name) VALUES ("Dulce");
 INSERT INTO categories (name) VALUES ("Mentolada");
 
 INSERT INTO users (username, password, first_name, last_name, email) VALUES ("migueliyo", "$2b$10$kPuJL7S/2dsvt1pUdxoiqujpbHT9VUeSBAry2iYDdu/bafVspfjpu", "Miguel", "Colmenero", "miguel@gmail.com");

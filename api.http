@@ -5,7 +5,7 @@ GET http://localhost:1234/flavours
 GET http://localhost:1234/flavours/1
 
 ### Recuperar todos los sabores por una marca
-GET http://localhost:1234/flavours?brand=SERBETLI
+GET http://localhost:1234/flavours?brand=taboo
 
 ### Crear un sabor con POST
 POST http://localhost:1234/flavours
@@ -14,15 +14,49 @@ Content-Type: application/json
 {
   "name": "Lemmer",
   "description": "Mermelada de limón",
-  "brand": "Serbetli"
+  "brand": "Serbetli",
+  "flavour_categories" : [
+    {
+      "category_name": "Fresco"
+    },
+    {
+      "category_name": "Afrutado"
+    }
+  ]
 }
 
-### Actualizar los datos de un sabor
+### Actualizar los datos de un sabor PATCH
 PATCH http://localhost:1234/flavours/5
 Content-Type: application/json
 
 {
-  "description": "Mermelada de limón y menta"
+  "description": "Sabor tropical muy fresco y afrutado",
+  "flavour_categories" : [
+    {
+      "category_name": "Dulce"
+    },
+    {
+      "category_name": "Afrutado"
+    }
+  ]
+}
+
+### Actualizar los datos de un sabor PUT
+PUT http://localhost:1234/flavours/5
+Content-Type: application/json
+
+{
+  "name": "Lemmer",
+  "description": "Mermelada de limón y menta",
+  "brand": "Serbetli",
+  "flavour_categories" : [
+    {
+      "category_name": "Fresco"
+    },
+    {
+      "category_name": "Afrutado"
+    }
+  ]
 }
 
 ### Borrar un sabor
@@ -37,7 +71,7 @@ GET http://localhost:1234/mixes
 GET http://localhost:1234/mixes/1
 
 ### Recuperar todas las mezclas por un tipo
-GET http://localhost:1234/mixes?category=dulce
+GET http://localhost:1234/mixes?category=afrutada
 
 ### Crear una mezcla con POST
 POST http://localhost:1234/mixes
@@ -70,12 +104,29 @@ Content-Type: application/json
   ]
 }
 
-### Actualizar los datos de una mezcla
-PUT http://localhost:1234/mixes/7
+### Actualizar los datos de una mezcla PATCH
+PATCH http://localhost:1234/mixes/3
 Content-Type: application/json
 
 {
-  "name": "Mezcla favorita",
+    "mix_flavours": [
+    {
+      "flavour_name": "Richman",
+      "percentage": 70
+    },
+    {
+      "flavour_name": "Forever",
+      "percentage": 30
+    }
+  ]
+}
+
+### Actualizar los datos de una mezcla PUT
+PUT http://localhost:1234/mixes/3
+Content-Type: application/json
+
+{
+  "name": "Mezcla muy dulce y afrutada",
   "username": "migueliyo",
   "mix_flavours": [
     {
@@ -98,7 +149,7 @@ Content-Type: application/json
 }
 
 ### Borrar una mezcla
-DELETE http://localhost:1234/mixes/7
+DELETE http://localhost:1234/mixes/3
 
 #####################################################################
 
@@ -120,12 +171,24 @@ Content-Type: application/json
   "email" : "juanito@gmail.com"
 }
 
-### Actualizar los datos de un usuario
+### Actualizar los datos de un usuario PATCH
 PATCH http://localhost:1234/users/2
 Content-Type: application/json
 
 {
   "username": "juanillo456"
+}
+
+### Actualizar los datos de un usuario PUT
+PUT http://localhost:1234/users/2
+Content-Type: application/json
+
+{
+  "username": "juanito123",
+  "password": "admin456",
+  "first_name": "Juan",
+  "last_name" : "González",
+  "email" : "juanito@gmail.com"
 }
 
 ### Borrar un usuario
