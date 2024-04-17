@@ -13,57 +13,95 @@ const connectionString = process.env.DATABASE_URL ?? DEFAULT_CONFIG;
 const connection = await mysql.createConnection(connectionString);
 
 export class MixModel {
-  getAll = async ({ category }) => {
-    if (category) {
-      const lowerCaseCategory = category.toLowerCase();
+  getAll = async ({ category, flavour }) => {
+    let lowerCaseCategory, lowerCaseFlavour;
+    let query = `
+        SELECT 
+        mixes.id, 
+        mixes.name AS mix_name, 
+        users.username AS username, 
+        JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id', flavours.id, 
+                'name', flavours.name, 
+                'percentage', mix_flavours.percentage
+            )
+        ) AS flavours, 
+        (
+            SELECT JSON_ARRAYAGG(JSON_OBJECT('id', category_id, 'name', c.name)) 
+            FROM (
+                SELECT DISTINCT flavour_categories.category_id 
+                FROM flavour_categories 
+                JOIN mix_flavours ON flavour_categories.flavour_id = mix_flavours.flavour_id
+                WHERE mix_flavours.mix_id = mixes.id
+            ) AS unique_categories
+            JOIN categories c ON unique_categories.category_id = c.id`;
 
-      const [mixes] = await connection.query(
-        `SELECT mixes.id, mixes.name AS mix_name, users.username AS username, 
-        GROUP_CONCAT(DISTINCT CONCAT(flavours.name, ':', mix_flavours.percentage) ORDER BY mix_flavours.id) AS flavour_percentage_pairs, 
-        GROUP_CONCAT(DISTINCT categories.name) AS category_names
+    if (category) {
+      lowerCaseCategory = category.toLowerCase();
+      query += `
+            WHERE c.name = ?`;
+    }
+
+    query += `
+            ) AS categories
         FROM mixes
         JOIN users ON mixes.user_id = users.id
         JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
-        JOIN flavours ON mix_flavours.flavour_id = flavours.id
-        JOIN mix_categories ON mixes.id = mix_categories.mix_id
-        JOIN categories ON mix_categories.category_id = categories.id
-        WHERE categories.name = ?
-        GROUP BY mixes.id;`,
-        [lowerCaseCategory]
-      );
+        JOIN flavours ON mix_flavours.flavour_id = flavours.id`;
 
-      return mixes;
+    if (flavour) {
+      lowerCaseFlavour = flavour.toLowerCase();
+      query += `
+        WHERE flavours.name = ?`;
     }
 
-    const [mixes] = await connection.query(
-      `SELECT mixes.id, mixes.name AS mix_name, users.username AS username, 
-      GROUP_CONCAT(DISTINCT CONCAT(flavours.name, ':', mix_flavours.percentage) ORDER BY mix_flavours.id) AS flavour_percentage_pairs, 
-      GROUP_CONCAT(DISTINCT categories.name) AS category_names
-      FROM mixes
-      JOIN users ON mixes.user_id = users.id
-      JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
-      JOIN flavours ON mix_flavours.flavour_id = flavours.id
-      JOIN mix_categories ON mixes.id = mix_categories.mix_id
-      JOIN categories ON mix_categories.category_id = categories.id
-      GROUP BY mixes.id;`
-    );
+    query += `
+        GROUP BY mixes.id, mixes.name, users.username
+        HAVING categories IS NOT NULL`;
 
+    let params = [];
+    if (category && flavour) {
+      params = [lowerCaseCategory, lowerCaseFlavour];
+    } else if (category) {
+      params = [lowerCaseCategory];
+    } else if (flavour) {
+      params = [lowerCaseFlavour];
+    }
+
+    const [mixes] = await connection.query(query, params);
     return mixes;
   };
 
   getById = async ({ id }) => {
     const [mixes] = await connection.query(
-      `SELECT mixes.id, mixes.name AS mix_name, users.username AS username, 
-      GROUP_CONCAT(DISTINCT CONCAT(flavours.name, ':', mix_flavours.percentage) ORDER BY mix_flavours.id) AS flavour_percentage_pairs, 
-      GROUP_CONCAT(DISTINCT categories.name) AS category_names
+      `SELECT 
+      mixes.id, 
+      mixes.name AS mix_name, 
+      users.username AS username, 
+      JSON_ARRAYAGG(
+          JSON_OBJECT(
+              'id', flavours.id, 
+              'name', flavours.name, 
+              'percentage', mix_flavours.percentage
+          )
+      ) AS flavours, 
+      (
+          SELECT JSON_ARRAYAGG(JSON_OBJECT('id', category_id, 'name', c.name)) 
+          FROM (
+              SELECT DISTINCT flavour_categories.category_id 
+              FROM flavour_categories 
+              JOIN mix_flavours ON flavour_categories.flavour_id = mix_flavours.flavour_id
+              WHERE mix_flavours.mix_id = mixes.id
+          ) AS unique_categories
+          JOIN categories c ON unique_categories.category_id = c.id
+      ) AS categories
       FROM mixes
       JOIN users ON mixes.user_id = users.id
       JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
       JOIN flavours ON mix_flavours.flavour_id = flavours.id
-      JOIN mix_categories ON mixes.id = mix_categories.mix_id
-      JOIN categories ON mix_categories.category_id = categories.id
       WHERE mixes.id = ?
-      GROUP BY mixes.id;`,
+      GROUP BY mixes.id, mixes.name, users.username;`,
       [id]
     );
 
@@ -73,103 +111,116 @@ export class MixModel {
   };
 
   create = async ({ input }) => {
-    const { name, username, mix_flavours, mix_categories } = input;
-
+    const { name, username, mix_flavours } = input;
+    let mixId = null; // Inicializar mixId con un valor predeterminado
+  
     try {
+      const [existingUser] = await connection.query(
+        'SELECT * FROM users WHERE username = ?;',
+        [username]
+      );
+  
+      if (existingUser.length === 0) {
+        throw new Error("User not found");
+      }
+  
       // Insertar la mezcla
-      await connection.query(
+      const [insertResult] = await connection.query(
         `INSERT INTO mixes (user_id, name)
           VALUES ((SELECT id FROM users WHERE username = ?), ?);`,
         [username, name]
       );
-
+  
       // Obtener el id de la mezcla recién insertada
-      const [mixResult] = await connection.query(
-        `SELECT id FROM mixes WHERE name = ?`,
-        [name]
-      );
-      const mixId = mixResult[0].id;
-
+      mixId = insertResult.insertId;
+  
       // Insertar mix_flavours
       for (const mix_flavour of mix_flavours) {
+        // Verificar que todos los sabores existen en la base de datos
+        const existingFlavours = await Promise.all(
+          mix_flavours.map(async (mix_flavour) => {
+            const { flavour_name } = mix_flavour;
+            const [flavourResult] = await connection.query(
+              "SELECT id FROM flavours WHERE name = ?",
+              [flavour_name]
+            );
+            return flavourResult.length > 0;
+          })
+        );
+  
+        if (!existingFlavours.every((flavourExists) => flavourExists)) {
+          throw new Error("One or more flavours do not exist");
+        }
+  
         const { flavour_name, percentage } = mix_flavour;
         await connection.query(
           `INSERT INTO mix_flavours (mix_id, flavour_id, percentage)
-            VALUES (?, (SELECT id FROM flavours WHERE name = ?), ?)`,
+          VALUES (?, (SELECT id FROM flavours WHERE name = ?), ?);`,
           [mixId, flavour_name, percentage]
         );
       }
-
-      // Insertar mix_categories
-      for (const mix_category of mix_categories) {
-        const { category_name } = mix_category;
-        // Verificar si la categoría ya existe
-        const [categoryResult] = await connection.query(
-          `SELECT id FROM categories WHERE name = ?`,
-          [category_name]
+  
+      // Verificar que mixId no sea null antes de ejecutar la última consulta
+      if (mixId !== null) {
+        // Obtener la mezcla completa
+        const [mixes] = await connection.query(
+          `SELECT 
+          mixes.id, 
+          mixes.name AS mix_name, 
+          users.username AS username, 
+          JSON_ARRAYAGG(
+              JSON_OBJECT(
+                  'id', flavours.id, 
+                  'name', flavours.name, 
+                  'percentage', mix_flavours.percentage
+              )
+          ) AS flavours, 
+          (
+              SELECT JSON_ARRAYAGG(JSON_OBJECT('id', category_id, 'name', c.name)) 
+              FROM (
+                  SELECT DISTINCT flavour_categories.category_id 
+                  FROM flavour_categories 
+                  JOIN mix_flavours ON flavour_categories.flavour_id = mix_flavours.flavour_id
+                  WHERE mix_flavours.mix_id = mixes.id
+              ) AS unique_categories
+              JOIN categories c ON unique_categories.category_id = c.id
+          ) AS categories
+          FROM mixes
+          JOIN users ON mixes.user_id = users.id
+          JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
+          JOIN flavours ON mix_flavours.flavour_id = flavours.id
+          WHERE mixes.id = ?
+          GROUP BY mixes.id, mixes.name, users.username;`,
+          [mixId]
         );
-        let categoryId;
-        if (categoryResult.length > 0) {
-          categoryId = categoryResult[0].id;
-        } else {
-          // Si la categoría no existe, insertarla y obtener su id
-          const [insertedCategory] = await connection.query(
-            `INSERT INTO categories (name) VALUES (?)`,
-            [category_name]
-          );
-          categoryId = insertedCategory.insertId;
-        }
-        // Insertar el enlace entre la mezcla y la categoría
-        await connection.query(
-          `INSERT INTO mix_categories (mix_id, category_id) VALUES (?, ?)`,
-          [mixId, categoryId]
-        );
+  
+        return mixes;
+      } else {
+        throw new Error("mixId is null");
       }
-
-      // Obtener la mezcla completa
-      const [mixes] = await connection.query(
-        `SELECT mixes.id, mixes.name AS mix_name, users.username AS username, 
-        GROUP_CONCAT(DISTINCT CONCAT(flavours.name, ':', mix_flavours.percentage) ORDER BY mix_flavours.id) AS flavour_percentage_pairs, 
-        GROUP_CONCAT(DISTINCT categories.name) AS category_names
-        FROM mixes
-        JOIN users ON mixes.user_id = users.id
-        JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
-        JOIN flavours ON mix_flavours.flavour_id = flavours.id
-        JOIN mix_categories ON mixes.id = mix_categories.mix_id
-        JOIN categories ON mix_categories.category_id = categories.id
-        WHERE mixes.id = ?
-        GROUP BY mixes.id;`,
-        [mixId]
-      );
-
-      return mixes;
     } catch (error) {
-      throw new Error("Error creating a new mix: " + error);
+      // Eliminar la mezcla que se había creado por error si mixId no es null
+      if (mixId !== null) {
+        await connection.query("DELETE FROM mixes WHERE id = ?", mixId);
+      }
+      throw new Error("Error creating a new mix -> " + error);
     }
   };
+  
 
   delete = async ({ id }) => {
     try {
       const [result1] = await connection.query(
-        "DELETE FROM mix_flavours WHERE mix_id = ?",
+        "DELETE FROM mix_flavours WHERE mix_id = ?;",
         [id]
       );
 
       const [result2] = await connection.query(
-        "DELETE FROM mix_categories WHERE mix_id = ?",
+        "DELETE FROM mixes WHERE id = ?;",
         [id]
       );
 
-      const [result3] = await connection.query(
-        "DELETE FROM mixes WHERE id = ?",
-        [id]
-      );
-
-      if (
-        result1.affectedRows > 0 &&
-        result2.affectedRows > 0 &&
-        result3.affectedRows > 0
-      ) {
+      if (result1.affectedRows > 0 && result2.affectedRows > 0) {
         return true;
       } else {
         return false;
@@ -180,11 +231,11 @@ export class MixModel {
   };
 
   update = async ({ id, input }) => {
-    const { name, mix_flavours, mix_categories } = input;
+    const { name, mix_flavours } = input;
 
     try {
       const [existingMix] = await connection.query(
-        "SELECT * FROM mixes WHERE id = ?",
+        "SELECT * FROM mixes WHERE id = ?;",
         [id]
       );
 
@@ -192,17 +243,25 @@ export class MixModel {
         throw new Error("Mix not found");
       }
 
-      let result1, result2, result3;
-
-      if (name != undefined) {
-        // Actualizar el nombre de la mezcla
-        [result1] = await connection.query(
-          "UPDATE mixes SET name = ? WHERE id = ?",
-          [name, id]
-        );
-      }
+      let result1, result2;
 
       if (mix_flavours !== undefined) {
+        // Verificar que todos los sabores existen en la base de datos
+        const existingFlavours = await Promise.all(
+          mix_flavours.map(async (mix_flavour) => {
+            const { flavour_name } = mix_flavour;
+            const [flavourResult] = await connection.query(
+              "SELECT id FROM flavours WHERE name = ?",
+              [flavour_name]
+            );
+            return flavourResult.length > 0;
+          })
+        );
+
+        if (!existingFlavours.every((flavourExists) => flavourExists)) {
+          throw new Error("One or more flavours do not exist");
+        }
+
         // Eliminar todos los registros de mix_flavours para el mix_id dado
         await connection.query("DELETE FROM mix_flavours WHERE mix_id = ?", [
           id,
@@ -211,7 +270,7 @@ export class MixModel {
         // Insertar los nuevos registros de mix_flavours
         for (const mix_flavour of mix_flavours) {
           const { flavour_name, percentage } = mix_flavour;
-          [result2] = await connection.query(
+          [result1] = await connection.query(
             `INSERT INTO mix_flavours (mix_id, flavour_id, percentage)
             VALUES (?, (SELECT id FROM flavours WHERE name = ?), ?)`,
             [id, flavour_name, percentage]
@@ -219,58 +278,48 @@ export class MixModel {
         }
       }
 
-      if (mix_categories !== undefined) {
-        // Eliminar todos los registros de mix_categories para el mix_id dado
-        await connection.query("DELETE FROM mix_categories WHERE mix_id = ?", [
-          id,
-        ]);
-
-        // Insertar los nuevos registros de mix_categories
-        for (const mix_category of mix_categories) {
-          const { category_name } = mix_category;
-          // Verificar si la categoría ya existe
-          const [categoryResult] = await connection.query(
-            `SELECT id FROM categories WHERE name = ?`,
-            [category_name]
-          );
-          let categoryId;
-          if (categoryResult.length > 0) {
-            categoryId = categoryResult[0].id;
-          } else {
-            // Si la categoría no existe, insertarla y obtener su id
-            const [insertedCategory] = await connection.query(
-              `INSERT INTO categories (name) VALUES (?)`,
-              [category_name]
-            );
-            categoryId = insertedCategory.insertId;
-          }
-          // Insertar el enlace entre la mezcla y la categoría
-          [result3] = await connection.query(
-            `INSERT INTO mix_categories (mix_id, category_id) VALUES (?, ?)`,
-            [id, categoryId]
-          );
-        }
+      if (name != undefined) {
+        // Actualizar el nombre de la mezcla
+        [result2] = await connection.query(
+          "UPDATE mixes SET name = ? WHERE id = ?",
+          [name, id]
+        );
       }
 
       // Verifica si se actualizó al menos una fila
       if (
         (result1 && result1.affectedRows > 0) ||
-        (result2 && result2.affectedRows > 0) ||
-        (result3 && result3.affectedRows > 0)
+        (result2 && result2.affectedRows > 0)
       ) {
         // Obtener la mezcla completa utilizando su id actualizado
         const [mixes] = await connection.query(
-          `SELECT mixes.id, mixes.name AS mix_name, users.username AS username, 
-          GROUP_CONCAT(DISTINCT CONCAT(flavours.name, ':', mix_flavours.percentage) ORDER BY mix_flavours.id) AS flavour_percentage_pairs, 
-          GROUP_CONCAT(DISTINCT categories.name) AS category_names
+          `SELECT 
+          mixes.id, 
+          mixes.name AS mix_name, 
+          users.username AS username, 
+          JSON_ARRAYAGG(
+              JSON_OBJECT(
+                  'id', flavours.id, 
+                  'name', flavours.name, 
+                  'percentage', mix_flavours.percentage
+              )
+          ) AS flavours, 
+          (
+              SELECT JSON_ARRAYAGG(JSON_OBJECT('id', category_id, 'name', c.name)) 
+              FROM (
+                  SELECT DISTINCT flavour_categories.category_id 
+                  FROM flavour_categories 
+                  JOIN mix_flavours ON flavour_categories.flavour_id = mix_flavours.flavour_id
+                  WHERE mix_flavours.mix_id = mixes.id
+              ) AS unique_categories
+              JOIN categories c ON unique_categories.category_id = c.id
+          ) AS categories
           FROM mixes
           JOIN users ON mixes.user_id = users.id
           JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
           JOIN flavours ON mix_flavours.flavour_id = flavours.id
-          JOIN mix_categories ON mixes.id = mix_categories.mix_id
-          JOIN categories ON mix_categories.category_id = categories.id
           WHERE mixes.id = ?
-          GROUP BY mixes.id;`,
+          GROUP BY mixes.id, mixes.name, users.username;`,
           [id]
         );
         return mixes[0];
@@ -278,7 +327,7 @@ export class MixModel {
         throw new Error("No data entered");
       }
     } catch (error) {
-      throw new Error("Error updating the mix: " + error);
+      throw new Error("Error updating the mix -> " + error);
     }
   };
 }

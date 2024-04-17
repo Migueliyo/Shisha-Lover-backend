@@ -19,8 +19,13 @@ export class FlavourModel {
 
       const [flavours] = await connection.query(
         `SELECT flavours.id, flavours.name AS flavour_name, flavours.description, brands.name AS brand_name,
-        GROUP_CONCAT(categories.name) AS category_names
-        FROM flavours 
+         JSON_ARRAYAGG(
+           JSON_OBJECT(
+             'id', categories.id,
+             'name', categories.name
+           )
+         ) AS categories
+        FROM flavours
         JOIN brands ON flavours.brand_id = brands.id
         JOIN flavour_categories ON flavours.id = flavour_categories.flavour_id
         JOIN categories ON flavour_categories.category_id = categories.id
@@ -34,8 +39,13 @@ export class FlavourModel {
 
     const [flavours] = await connection.query(
       `SELECT flavours.id, flavours.name AS flavour_name, flavours.description, brands.name AS brand_name,
-      GROUP_CONCAT(categories.name) AS category_names
-      FROM flavours 
+       JSON_ARRAYAGG(
+         JSON_OBJECT(
+           'id', categories.id,
+           'name', categories.name
+         )
+       ) AS categories
+      FROM flavours
       JOIN brands ON flavours.brand_id = brands.id
       JOIN flavour_categories ON flavours.id = flavour_categories.flavour_id
       JOIN categories ON flavour_categories.category_id = categories.id
@@ -48,8 +58,13 @@ export class FlavourModel {
   getById = async ({ id }) => {
     const [flavours] = await connection.query(
       `SELECT flavours.id, flavours.name AS flavour_name, flavours.description, brands.name AS brand_name,
-      GROUP_CONCAT(categories.name) AS category_names
-      FROM flavours 
+       JSON_ARRAYAGG(
+         JSON_OBJECT(
+           'id', categories.id,
+           'name', categories.name
+         )
+       ) AS categories
+      FROM flavours
       JOIN brands ON flavours.brand_id = brands.id
       JOIN flavour_categories ON flavours.id = flavour_categories.flavour_id
       JOIN categories ON flavour_categories.category_id = categories.id
@@ -70,6 +85,11 @@ export class FlavourModel {
       "SELECT id FROM brands WHERE name = ?",
       brand
     );
+
+    if (brandIdResult.length === 0) {
+      throw new Error("Brand not exist");
+    }
+
     const brandId = brandIdResult[0].id;
 
     try {
@@ -116,8 +136,13 @@ export class FlavourModel {
       // Obtener el sabor completa
       const [flavour] = await connection.query(
         `SELECT flavours.id, flavours.name AS flavour_name, flavours.description, brands.name AS brand_name,
-        GROUP_CONCAT(categories.name) AS category_names
-        FROM flavours 
+         JSON_ARRAYAGG(
+           JSON_OBJECT(
+             'id', categories.id,
+             'name', categories.name
+           )
+         ) AS categories
+        FROM flavours
         JOIN brands ON flavours.brand_id = brands.id
         JOIN flavour_categories ON flavours.id = flavour_categories.flavour_id
         JOIN categories ON flavour_categories.category_id = categories.id
@@ -128,7 +153,7 @@ export class FlavourModel {
 
       return flavour;
     } catch (e) {
-      throw new Error("Error creating the flavour");
+      throw new Error("Error creating the flavour ->" + e);
     }
   };
 
@@ -237,16 +262,24 @@ export class FlavourModel {
       }
 
       // Verifica si se actualizó al menos una fila
-      if ((result1 && result1.affectedRows > 0) || (result2 && result2.affectedRows > 0)) {
+      if (
+        (result1 && result1.affectedRows > 0) ||
+        (result2 && result2.affectedRows > 0)
+      ) {
         const [flavours] = await connection.query(
           `SELECT flavours.id, flavours.name AS flavour_name, flavours.description, brands.name AS brand_name,
-            GROUP_CONCAT(categories.name) AS category_names
-            FROM flavours 
-            JOIN brands ON flavours.brand_id = brands.id
-            JOIN flavour_categories ON flavours.id = flavour_categories.flavour_id
-            JOIN categories ON flavour_categories.category_id = categories.id
-            WHERE flavours.id = ?
-            GROUP BY flavours.id;`,
+          JSON_ARRAYAGG(
+            JSON_OBJECT(
+              'id', categories.id,
+              'name', categories.name
+            )
+          ) AS categories
+          FROM flavours
+          JOIN brands ON flavours.brand_id = brands.id
+          JOIN flavour_categories ON flavours.id = flavour_categories.flavour_id
+          JOIN categories ON flavour_categories.category_id = categories.id
+          WHERE flavours.id = ?
+          GROUP BY flavours.id;`,
           [id]
         );
         return flavours[0];
@@ -254,7 +287,7 @@ export class FlavourModel {
         throw new Error("No data entered");
       }
     } catch (error) {
-      throw new Error("Error updating the flavour: " + error);
+      throw new Error("Error updating the flavour -> " + error);
     }
   };
 }

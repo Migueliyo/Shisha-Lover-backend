@@ -7,7 +7,8 @@ export class MixController {
 
   getAll = async (req, res) => {
     const { category } = req.query
-    const mixes = await this.mixModel.getAll({ category })
+    const { flavour } = req.query
+    const mixes = await this.mixModel.getAll({ category, flavour })
     res.json(mixes)
   }
 

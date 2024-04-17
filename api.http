@@ -2,10 +2,10 @@
 GET http://localhost:1234/flavours
 
 ### Recuperar un sabor por id
-GET http://localhost:1234/flavours/1
+GET http://localhost:1234/flavours/2
 
 ### Recuperar todos los sabores por una marca
-GET http://localhost:1234/flavours?brand=taboo
+GET http://localhost:1234/flavours?brand=serbetli
 
 ### Crear un sabor con POST
 POST http://localhost:1234/flavours
@@ -33,7 +33,7 @@ Content-Type: application/json
   "description": "Sabor tropical muy fresco y afrutado",
   "flavour_categories" : [
     {
-      "category_name": "Dulce"
+      "category_name": "Especiado"
     },
     {
       "category_name": "Afrutado"
@@ -68,17 +68,23 @@ DELETE http://localhost:1234/flavours/5
 GET http://localhost:1234/mixes
 
 ### Recuperar una mezcla por id
-GET http://localhost:1234/mixes/1
+GET http://localhost:1234/mixes/2
+
+### Recuperar todas las mezclas por un sabor concreto
+GET http://localhost:1234/mixes?flavour=forever
 
 ### Recuperar todas las mezclas por un tipo
-GET http://localhost:1234/mixes?category=afrutada
+GET http://localhost:1234/mixes?&category=afrutado
+
+### Recuperar todas las mezclas por un tipo y un sabor concreto
+GET http://localhost:1234/mixes?flavour=jungle&category=afrutado
 
 ### Crear una mezcla con POST
 POST http://localhost:1234/mixes
 Content-Type: application/json
 
 {
-  "name": "Mezcla favorita",
+  "name": "Mezcla definitiva",
   "username": "migueliyo",
   "mix_flavours": [
     {
@@ -93,14 +99,6 @@ Content-Type: application/json
       "flavour_name": "Forever",
       "percentage": 34
     }
-  ],
-  "mix_categories" : [
-    {
-      "category_name": "Fresca"
-    },
-    {
-      "category_name": "Afrutada"
-    }
   ]
 }
 
@@ -111,7 +109,7 @@ Content-Type: application/json
 {
     "mix_flavours": [
     {
-      "flavour_name": "Richman",
+      "flavour_name": "Maca Roll",
       "percentage": 70
     },
     {
@@ -126,30 +124,26 @@ PUT http://localhost:1234/mixes/3
 Content-Type: application/json
 
 {
-  "name": "Mezcla muy dulce y afrutada",
+  "name": "Mezcla favorita",
   "username": "migueliyo",
   "mix_flavours": [
     {
-      "flavour_name": "Jungle",
-      "percentage": 70
-    },
-    {
       "flavour_name": "Forever",
-      "percentage": 30
-    }
-  ],
-    "mix_categories" : [
-    {
-      "category_name": "Fresca"
+      "percentage": 33
     },
     {
-      "category_name": "Afrutada"
+      "flavour_name": "Richman",
+      "percentage": 33
+    },
+    {
+      "flavour_name": "Maca Roll",
+      "percentage": 34
     }
   ]
 }
 
 ### Borrar una mezcla
-DELETE http://localhost:1234/mixes/3
+DELETE http://localhost:1234/mixes/23
 
 #####################################################################
 

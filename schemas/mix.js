@@ -8,13 +8,6 @@ const mixFlavourSchema = z.object({
   percentage: z.number().int().min(0).max(100),
 });
 
-const mixCategorySchema = z.object({
-  category_name: z.string({
-    invalid_type_error: "Category name must be a string",
-    required_error: "Category name is required.",
-  }),
-});
-
 const mixSchema = z.object({
   name: z.string({
     invalid_type_error: "Mix name must be a string",
@@ -25,7 +18,6 @@ const mixSchema = z.object({
     required_error: "Username is required.",
   }),
   mix_flavours: z.array(mixFlavourSchema),
-  mix_categories: z.array(mixCategorySchema),
 });
 
 export function validateMix(input) {
