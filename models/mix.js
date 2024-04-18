@@ -20,6 +20,10 @@ export class MixModel {
         mixes.id, 
         mixes.name AS mix_name, 
         users.username AS username, 
+        (SELECT COUNT(*) 
+        FROM mix_likes 
+        WHERE mix_likes.mix_id = mixes.id
+        ) AS total_likes,
         JSON_ARRAYAGG(
             JSON_OBJECT(
                 'id', flavours.id, 
@@ -48,7 +52,8 @@ export class MixModel {
         FROM mixes
         JOIN users ON mixes.user_id = users.id
         JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
-        JOIN flavours ON mix_flavours.flavour_id = flavours.id`;
+        JOIN flavours ON mix_flavours.flavour_id = flavours.id
+        LEFT JOIN mix_likes ON mixes.id = mix_likes.mix_id`;
 
     if (flavour) {
       lowerCaseFlavour = flavour.toLowerCase();
@@ -79,6 +84,10 @@ export class MixModel {
       mixes.id, 
       mixes.name AS mix_name, 
       users.username AS username, 
+      (SELECT COUNT(*) 
+      FROM mix_likes 
+      WHERE mix_likes.mix_id = mixes.id
+      ) AS total_likes,
       JSON_ARRAYAGG(
           JSON_OBJECT(
               'id', flavours.id, 
@@ -113,27 +122,27 @@ export class MixModel {
   create = async ({ input }) => {
     const { name, username, mix_flavours } = input;
     let mixId = null; // Inicializar mixId con un valor predeterminado
-  
+
     try {
       const [existingUser] = await connection.query(
-        'SELECT * FROM users WHERE username = ?;',
+        "SELECT * FROM users WHERE username = ?;",
         [username]
       );
-  
+
       if (existingUser.length === 0) {
         throw new Error("User not found");
       }
-  
+
       // Insertar la mezcla
       const [insertResult] = await connection.query(
         `INSERT INTO mixes (user_id, name)
           VALUES ((SELECT id FROM users WHERE username = ?), ?);`,
         [username, name]
       );
-  
+
       // Obtener el id de la mezcla recién insertada
       mixId = insertResult.insertId;
-  
+
       // Insertar mix_flavours
       for (const mix_flavour of mix_flavours) {
         // Verificar que todos los sabores existen en la base de datos
@@ -147,11 +156,11 @@ export class MixModel {
             return flavourResult.length > 0;
           })
         );
-  
+
         if (!existingFlavours.every((flavourExists) => flavourExists)) {
           throw new Error("One or more flavours do not exist");
         }
-  
+
         const { flavour_name, percentage } = mix_flavour;
         await connection.query(
           `INSERT INTO mix_flavours (mix_id, flavour_id, percentage)
@@ -159,7 +168,7 @@ export class MixModel {
           [mixId, flavour_name, percentage]
         );
       }
-  
+
       // Verificar que mixId no sea null antes de ejecutar la última consulta
       if (mixId !== null) {
         // Obtener la mezcla completa
@@ -168,6 +177,10 @@ export class MixModel {
           mixes.id, 
           mixes.name AS mix_name, 
           users.username AS username, 
+          (SELECT COUNT(*) 
+          FROM mix_likes 
+          WHERE mix_likes.mix_id = mixes.id
+          ) AS total_likes,
           JSON_ARRAYAGG(
               JSON_OBJECT(
                   'id', flavours.id, 
@@ -189,11 +202,12 @@ export class MixModel {
           JOIN users ON mixes.user_id = users.id
           JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
           JOIN flavours ON mix_flavours.flavour_id = flavours.id
+          LEFT JOIN mix_likes ON mixes.id = mix_likes.mix_id
           WHERE mixes.id = ?
           GROUP BY mixes.id, mixes.name, users.username;`,
           [mixId]
         );
-  
+
         return mixes;
       } else {
         throw new Error("mixId is null");
@@ -207,7 +221,6 @@ export class MixModel {
     }
   };
   
-
   delete = async ({ id }) => {
     try {
       const [result1] = await connection.query(
@@ -297,6 +310,10 @@ export class MixModel {
           mixes.id, 
           mixes.name AS mix_name, 
           users.username AS username, 
+          (SELECT COUNT(*) 
+          FROM mix_likes 
+          WHERE mix_likes.mix_id = mixes.id
+          ) AS total_likes,
           JSON_ARRAYAGG(
               JSON_OBJECT(
                   'id', flavours.id, 
@@ -318,6 +335,7 @@ export class MixModel {
           JOIN users ON mixes.user_id = users.id
           JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
           JOIN flavours ON mix_flavours.flavour_id = flavours.id
+          LEFT JOIN mix_likes ON mixes.id = mix_likes.mix_id
           WHERE mixes.id = ?
           GROUP BY mixes.id, mixes.name, users.username;`,
           [id]
@@ -328,6 +346,62 @@ export class MixModel {
       }
     } catch (error) {
       throw new Error("Error updating the mix -> " + error);
+    }
+  };
+  
+  // Método para agregar un like a una mezcla
+  addLike = async ({ id, userId }) => {
+    try {
+      // Verificar si el usuario ya dio like a esta mezcla
+      const [existingLike] = await connection.query(
+        "SELECT * FROM mix_likes WHERE user_id = ? AND mix_id = ?;",
+        [userId, id]
+      );
+
+      if (existingLike.length > 0) {
+        throw new Error("User already liked this mix");
+      }
+
+      // Insertar el like
+      const [insertResult] = await connection.query(
+        "INSERT INTO mix_likes (user_id, mix_id) VALUES (?, ?);",
+        [userId, id]
+      );
+
+      return insertResult.insertId; // Devolver el ID del like insertado
+    } catch (error) {
+      throw new Error("Error adding like to mix -> " + error);
+    }
+  };
+
+  // Método para eliminar un like de una mezcla
+  removeLike = async ({ id, userId }) => {
+    try {
+      // Verificar si el usuario ya dio like a esta mezcla
+      const [existingLike] = await connection.query(
+        "SELECT id FROM mix_likes WHERE user_id = ? AND mix_id = ?;",
+        [userId, id]
+      );
+
+      const likeId = existingLike[0].id;
+
+      if (likeId === undefined) {
+        throw new Error("User already dont liked this mix");
+      }
+
+      // Eliminar el like
+      const [deleteResult] = await connection.query(
+        "DELETE FROM mix_likes WHERE id = ?;",
+        [likeId]
+      );
+
+      if (deleteResult.affectedRows > 0) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      throw new Error("Error removing like from mix -> " + error);
     }
   };
 }

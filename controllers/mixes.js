@@ -66,4 +66,28 @@ export class MixController {
       res.status(400).json({ message: error.message });
     }
   }
+
+  addLike = async (req, res) => {
+    try {
+      const { id } = req.params;
+      // const userId = 1;
+      const userId = req.user.id; 
+      await this.mixModel.addLike({ id, userId });
+      res.json({ message: 'Like added successfully' });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  removeLike = async (req, res) => {
+    try {
+      const { id } = req.params;
+      // const userId = 1;
+      const userId = req.user.id; 
+      await this.mixModel.removeLike({ id, userId });
+      res.json({ message: 'Like removed successfully' });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
 }

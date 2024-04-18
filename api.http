@@ -142,6 +142,12 @@ Content-Type: application/json
   ]
 }
 
+### Agregar un like a una mezcla
+POST http://localhost:1234/mixes/1/like
+
+### Eliminar un like de una mezcla
+DELETE http://localhost:1234/mixes/1/like
+
 ### Borrar una mezcla
 DELETE http://localhost:1234/mixes/3
 

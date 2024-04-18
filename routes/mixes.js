@@ -14,5 +14,8 @@ export const createMixRouter = ({ mixModel }) => {
   mixRouter.patch('/:id', mixController.update)
   mixRouter.put('/:id', mixController.update)
 
+  mixRouter.post('/:id/like', mixController.addLike);
+  mixRouter.delete('/:id/like', mixController.removeLike);
+
   return mixRouter
 }

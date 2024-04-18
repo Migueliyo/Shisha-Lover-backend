@@ -53,6 +53,17 @@ CREATE TABLE mix_flavours (
     FOREIGN KEY (flavour_id) REFERENCES flavours(id)
 );
 
+-- Creación de la tabla de likes de las mezclas
+CREATE TABLE mix_likes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    mix_id INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (mix_id) REFERENCES mixes(id),
+    UNIQUE KEY unique_like (user_id, mix_id)
+);
+
+
 -- Creación de la tabla categorías
 CREATE TABLE categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
