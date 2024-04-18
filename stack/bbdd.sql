@@ -63,9 +63,28 @@ CREATE TABLE categories (
 -- almacenaré las categorías asociadas al sabor
 CREATE TABLE flavour_categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    flavour_id INT,
-    category_id INT,
+    flavour_id INT NOT NULL,
+    category_id INT NOT NULL,
     FOREIGN KEY (flavour_id) REFERENCES flavours(id),
+    FOREIGN KEY (category_id) REFERENCES categories(id)
+);
+
+-- Creación de la tabla entradas de texto
+CREATE TABLE entries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    description TEXT,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+-- Creación de la tabla categoría de las entradas de texto
+-- donde almacenaré las categorías asociadas a la entrada
+CREATE TABLE entry_categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    entry_id INT NOT NULL,
+    category_id INT NOT NULL,
+    FOREIGN KEY (entry_id) REFERENCES entries(id),
     FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
@@ -76,6 +95,10 @@ INSERT INTO brands (name) VALUES ("Serbetli");
 
 INSERT INTO categories (name) VALUES ("Afrutado");
 INSERT INTO categories (name) VALUES ("Dulce");
+INSERT INTO categories (name) VALUES ("Consejos");
+INSERT INTO categories (name) VALUES ("Limpieza");
+INSERT INTO categories (name) VALUES ("Mantenimiento");
+INSERT INTO categories (name) VALUES ("Mezclas");
 
 INSERT INTO flavours (name, description, brand_id) VALUES ("Jungle", "Frutas tropicales con hielo", (SELECT id FROM brands WHERE name="Taboo"));
 INSERT INTO flavours (name, description, brand_id) VALUES ("Richman", "Helado de frambuesa", (SELECT id FROM brands WHERE name="Taboo"));
@@ -90,7 +113,8 @@ INSERT INTO flavour_categories (flavour_id, category_id) VALUES ((SELECT id FROM
 INSERT INTO flavour_categories (flavour_id, category_id) VALUES ((SELECT id FROM flavours WHERE name = "Maca Roll"), (SELECT id FROM categories WHERE name = "Afrutado"));
 INSERT INTO flavour_categories (flavour_id, category_id) VALUES ((SELECT id FROM flavours WHERE name = "Maca Roll"), (SELECT id FROM categories WHERE name = "Dulce"));
 
-INSERT INTO users (username, password, first_name, last_name, email) VALUES ("migueliyo", "$2b$10$kPuJL7S/2dsvt1pUdxoiqujpbHT9VUeSBAry2iYDdu/bafVspfjpu", "Miguel", "Colmenero", "miguel@gmail.com");
+INSERT INTO users (username, password, first_name, last_name, email) VALUES ("migueliyo", "$2b$10$kPuJL7S/2dsvt1pUdxoiqujpbHT9VUeSBAry2iYDdu/bafVspfjpu", "Miguel", 
+"Colmenero", "miguel@gmail.com");
 
 INSERT INTO mixes (user_id, name) VALUES ((SELECT id FROM users WHERE username = "migueliyo"), "Mezcla 1");
 INSERT INTO mix_flavours (mix_id, flavour_id, percentage) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 1"), (SELECT id FROM flavours WHERE name = "Richman"), 50);
@@ -99,3 +123,33 @@ INSERT INTO mix_flavours (mix_id, flavour_id, percentage) VALUES ((SELECT id FRO
 INSERT INTO mixes (user_id, name) VALUES ((SELECT id FROM users WHERE username = "migueliyo"), "Mezcla 2");
 INSERT INTO mix_flavours (mix_id, flavour_id, percentage) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 2"), (SELECT id FROM flavours WHERE name = "Maca Roll"), 50);
 INSERT INTO mix_flavours (mix_id, flavour_id, percentage) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 2"), (SELECT id FROM flavours WHERE name = "Jungle"), 50);
+
+INSERT INTO entries (user_id, title, description) VALUES ((SELECT id FROM users WHERE username = "migueliyo"), "Como mantener tu cachimba limpia con el paso del tiempo", 
+'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In lectus metus, rutrum sed fringilla mattis, lacinia sed mauris. Aenean eget congue enim. Phasellus in quam a 
+sapien blandit tempor eu vitae felis. Donec at nunc tincidunt, molestie ex sit amet, posuere mauris. Etiam ac dolor ac diam pretium maximus. In hac habitasse platea dictumst. 
+Vivamus eget nulla a eros bibendum suscipit.Interdum et malesuada fames ac ante ipsum primis in faucibus. Mauris non felis dictum, feugiat tellus quis, efficitur ante. Nunc 
+nec tortor dictum, egestas libero sit amet, luctus quam. Aliquam at porta sapien, vel ultrices est. Suspendisse quam lacus, condimentum a ante eu, pellentesque aliquet libero. 
+Nullam dignissim tellus ante, nec scelerisque dolor vehicula eu. Quisque molestie gravida ante sed aliquam. Maecenas gravida, dolor eget congue congue, enim magna vehicula erat, 
+vitae condimentum augue urna id risus. Phasellus lacinia fringilla cursus. Donec a tincidunt turpis. Suspendisse blandit mi dignissim lorem euismod, gravida porttitor dolor 
+placerat. Pellentesque eget purus nec sapien luctus rutrum. Nulla et lobortis tortor. Donec tempus nibh eu neque imperdiet, eget condimentum enim euismod. Curabitur eros sem, 
+fringilla non purus finibus, mattis efficitur justo.');
+INSERT INTO entries (user_id, title, description) VALUES ((SELECT id FROM users WHERE username = "migueliyo"), "Consejos para la realizacion de mejores mezclas", 
+'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In lectus metus, rutrum sed fringilla mattis, lacinia sed mauris. Aenean eget congue enim. Phasellus in quam a 
+sapien blandit tempor eu vitae felis. Donec at nunc tincidunt, molestie ex sit amet, posuere mauris. Etiam ac dolor ac diam pretium maximus. In hac habitasse platea dictumst. 
+Vivamus eget nulla a eros bibendum suscipit.Interdum et malesuada fames ac ante ipsum primis in faucibus. Mauris non felis dictum, feugiat tellus quis, efficitur ante. Nunc 
+nec tortor dictum, egestas libero sit amet, luctus quam. Aliquam at porta sapien, vel ultrices est. Suspendisse quam lacus, condimentum a ante eu, pellentesque aliquet libero. 
+Nullam dignissim tellus ante, nec scelerisque dolor vehicula eu. Quisque molestie gravida ante sed aliquam. Maecenas gravida, dolor eget congue congue, enim magna vehicula erat, 
+vitae condimentum augue urna id risus. Phasellus lacinia fringilla cursus. Donec a tincidunt turpis. Suspendisse blandit mi dignissim lorem euismod, gravida porttitor dolor 
+placerat. Pellentesque eget purus nec sapien luctus rutrum. Nulla et lobortis tortor. Donec tempus nibh eu neque imperdiet, eget condimentum enim euismod. Curabitur eros sem, 
+fringilla non purus finibus, mattis efficitur justo.');
+
+INSERT INTO entry_categories (entry_id, category_id) VALUES ((SELECT id FROM entries WHERE title = "Como mantener tu cachimba limpia con el paso del tiempo"), 
+(SELECT id FROM categories WHERE name = "Consejos"));
+INSERT INTO entry_categories (entry_id, category_id) VALUES ((SELECT id FROM entries WHERE title = "Como mantener tu cachimba limpia con el paso del tiempo"), 
+(SELECT id FROM categories WHERE name = "Limpieza"));
+INSERT INTO entry_categories (entry_id, category_id) VALUES ((SELECT id FROM entries WHERE title = "Como mantener tu cachimba limpia con el paso del tiempo"), 
+(SELECT id FROM categories WHERE name = "Mantenimiento"));
+INSERT INTO entry_categories (entry_id, category_id) VALUES ((SELECT id FROM entries WHERE title = "Consejos para la realizacion de mejores mezclas"), 
+(SELECT id FROM categories WHERE name = "Consejos"));
+INSERT INTO entry_categories (entry_id, category_id) VALUES ((SELECT id FROM entries WHERE title = "Consejos para la realizacion de mejores mezclas"), 
+(SELECT id FROM categories WHERE name = "Mezclas"));
