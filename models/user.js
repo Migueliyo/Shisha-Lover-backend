@@ -15,15 +15,45 @@ const connection = await mysql.createConnection(connectionString);
 
 export class UserModel {
   getAll = async () => {
-    const [users] = await connection.query("SELECT * FROM users;");
+    const [users] = await connection.query(
+      `SELECT 
+        users.id, 
+        users.username, 
+        users.password, 
+        users.first_name, 
+        users.last_name, 
+        users.email, 
+        users.created_at,
+        JSON_ARRAYAGG(
+            CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
+        ) AS liked_mixes
+      FROM users
+      LEFT JOIN mix_likes ON users.id = mix_likes.user_id
+      GROUP BY users.id;`
+    );
 
     return users;
   };
 
   getById = async ({ id }) => {
-    const [users] = await connection.query("SELECT * FROM users WHERE id = ?", [
-      id,
-    ]);
+    const [users] = await connection.query(
+      `SELECT 
+        users.id, 
+        users.username, 
+        users.password, 
+        users.first_name, 
+        users.last_name, 
+        users.email, 
+        users.created_at,
+        JSON_ARRAYAGG(
+            CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
+        ) AS liked_mixes
+      FROM users
+      LEFT JOIN mix_likes ON users.id = mix_likes.user_id
+      WHERE users.id = ?
+      GROUP BY users.id;`,
+      [id]
+    );
 
     if (users.length === 0) return null;
 
@@ -42,11 +72,25 @@ export class UserModel {
         [username, hashedPassword, first_name, last_name, email]
       );
     } catch (e) {
-      throw new Error("Error creating the user");
+      throw new Error("Error creating the user -> " + e);
     }
 
     const [users] = await connection.query(
-      "SELECT * FROM users WHERE username = ?",
+      `SELECT 
+        users.id, 
+        users.username, 
+        users.password, 
+        users.first_name, 
+        users.last_name, 
+        users.email, 
+        users.created_at,
+        JSON_ARRAYAGG(
+            CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
+        ) AS liked_mixes
+      FROM users
+      LEFT JOIN mix_likes ON users.id = mix_likes.user_id
+      WHERE users.username = ?
+      GROUP BY users.id;`,
       username
     );
 
@@ -121,7 +165,21 @@ export class UserModel {
         // Verifica si se actualizó al menos una fila
         if (result.affectedRows > 0) {
           const [users] = await connection.query(
-            "SELECT * FROM users WHERE id = ?",
+            `SELECT 
+              users.id, 
+              users.username, 
+              users.password, 
+              users.first_name, 
+              users.last_name, 
+              users.email, 
+              users.created_at,
+              JSON_ARRAYAGG(
+                  CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
+              ) AS liked_mixes
+            FROM users
+            LEFT JOIN mix_likes ON users.id = mix_likes.user_id
+            WHERE users.id = ?
+            GROUP BY users.id;`,
             [id]
           );
           return users[0];
