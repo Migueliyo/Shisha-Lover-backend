@@ -7,8 +7,8 @@ export class EntryController {
 
   getAll = async (req, res) => {
     const { category } = req.query
-    const categories = await this.entryModel.getAll({ category })
-    res.json(categories)
+    const entries = await this.entryModel.getAll({ category })
+    res.json(entries)
   }
 
   getById = async (req, res) => {
