@@ -7,14 +7,14 @@ export class UserController {
 
   getAll = async (req, res) => {
     const users = await this.userModel.getAll()
-    res.json(users)
+    res.json({error: false, data: users})
   }
 
   getById = async (req, res) => {
     const { id } = req.params
     const user = await this.userModel.getById({ id })
-    if (user) return res.json(user)
-    res.status(404).json({ message: 'User not found' })
+    if (user) return res.json({error: false, data: user})
+    res.status(404).json({ error: true, message: 'User not found' })
   }
 
   create = async (req, res) => {
@@ -22,14 +22,14 @@ export class UserController {
       const result = validateUser(req.body)
 
       if (!result.success) {
-        return res.status(400).json({ error: JSON.parse(result.error.message) })
+        return res.status(400).json({ error: true, message: JSON.parse(result.error.message) })
       }
 
       const newUser = await this.userModel.create({ input: result.data })
 
-      res.status(201).json(newUser)
+      res.status(201).json({ error: false, data: newUser })
     } catch (error) {
-      res.status(400).json({ message: error.message })
+      res.status(400).json({ error: true, message: error.message })
     }
   }
 
@@ -39,10 +39,10 @@ export class UserController {
     const result = await this.userModel.delete({ id })
 
     if (result === false) {
-      return res.status(404).json({ message: 'User not found' })
+      return res.status(404).json({ error: true, message: 'User not found' })
     }
 
-    return res.json({ message: 'User deleted' })
+    return res.json({ error: false, message: 'User deleted' })
   }
 
   update = async (req, res) => {
@@ -50,16 +50,16 @@ export class UserController {
       const result = validatePartialUser(req.body)
 
       if (!result.success) {
-        return res.status(400).json({ error: JSON.parse(result.error.message) })
+        return res.status(400).json({ error: true, message: JSON.parse(result.error.message) })
       }
   
       const { id } = req.params
   
       const updatedUser = await this.userModel.update({ id, input: result.data })
   
-      return res.json(updatedUser)
+      return res.json({ error: false, data: updatedUser })
     } catch (error) {
-      res.status(400).json({ message: error.message })
+      res.status(400).json({ error: true, message: error.message })
     }
   }
 }

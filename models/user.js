@@ -15,8 +15,9 @@ const connection = await mysql.createConnection(connectionString);
 
 export class UserModel {
   getAll = async () => {
-    const [users] = await connection.query(
-      `SELECT 
+    try {
+      const [users] = await connection.query(
+        `SELECT 
         users.id, 
         users.username, 
         users.password, 
@@ -30,14 +31,18 @@ export class UserModel {
       FROM users
       LEFT JOIN mix_likes ON users.id = mix_likes.user_id
       GROUP BY users.id;`
-    );
+      );
 
-    return users;
+      return users;
+    } catch (error) {
+      throw new Error(error);
+    }
   };
 
   getById = async ({ id }) => {
-    const [users] = await connection.query(
-      `SELECT 
+    try {
+      const [users] = await connection.query(
+        `SELECT 
         users.id, 
         users.username, 
         users.password, 
@@ -52,31 +57,31 @@ export class UserModel {
       LEFT JOIN mix_likes ON users.id = mix_likes.user_id
       WHERE users.id = ?
       GROUP BY users.id;`,
-      [id]
-    );
+        [id]
+      );
 
-    if (users.length === 0) return null;
+      if (users.length === 0) return null;
 
-    return users[0];
+      return users[0];
+    } catch (error) {
+      throw new Error(error);
+    }
   };
 
   create = async ({ input }) => {
     const { username, password, first_name, last_name, email } = input;
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
+    
     try {
+      const hashedPassword = await bcrypt.hash(password, 10);
+
       await connection.query(
         `INSERT INTO users (username, password, first_name, last_name, email)
           VALUES (?, ?, ?, ?, ?);`,
         [username, hashedPassword, first_name, last_name, email]
       );
-    } catch (e) {
-      throw new Error("Error creating the user -> " + e);
-    }
 
-    const [users] = await connection.query(
-      `SELECT 
+      const [users] = await connection.query(
+        `SELECT 
         users.id, 
         users.username, 
         users.password, 
@@ -91,10 +96,13 @@ export class UserModel {
       LEFT JOIN mix_likes ON users.id = mix_likes.user_id
       WHERE users.username = ?
       GROUP BY users.id;`,
-      username
-    );
+        username
+      );
 
-    return users[0];
+      return users[0];
+    } catch (e) {
+      throw new Error(e);
+    }
   };
 
   delete = async ({ id }) => {
@@ -188,7 +196,7 @@ export class UserModel {
         throw new Error("No data entered");
       }
     } catch (error) {
-      throw new Error("Error updating the user");
+      throw new Error(error);
     }
   };
 }

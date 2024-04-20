@@ -1,5 +1,5 @@
 import mysql from "mysql2/promise";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
 const DEFAULT_CONFIG = {
@@ -16,31 +16,69 @@ const connection = await mysql.createConnection(connectionString);
 
 export class AuthModel {
   login = async ({ input }) => {
-    const { email, password } = input;
-    
-    const [user] = await connection.query(
-        'SELECT * FROM users WHERE email = ?' , email
-    )
+    try {
+      const { email, password } = input;
 
-    if (user.length === 0) 
-        throw new Error("User not found");
+      const [user] = await connection.query(
+        "SELECT * FROM users WHERE email = ?",
+        email
+      );
 
-    const validPassword = await bcrypt.compare(password, user[0].password);
+      if (user.length === 0) throw new Error("User not found");
 
-    if (!validPassword) 
-        throw new Error("Incorrect password");
-    
-    // create token
-    const jwtToken = jwt.sign(
-      {
-        email: user[0].email,
-        id: user[0].id,
-      },
-      process.env.TOKEN_SECRET
-    );
+      const validPassword = await bcrypt.compare(password, user[0].password);
 
-    return jwtToken;
+      if (!validPassword) throw new Error("Incorrect password");
+
+      // create token
+      const jwtToken = jwt.sign(
+        {
+          email: user[0].email,
+          id: user[0].id,
+        },
+        process.env.TOKEN_SECRET
+      );
+
+      return jwtToken;
+    } catch (error) {
+      throw new Error(error)
+    }
   };
 
-  register = async () => {};
+  register = async ({ input }) => {
+    const { username, password, first_name, last_name, email } = input;
+    
+    try {
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      await connection.query(
+        `INSERT INTO users (username, password, first_name, last_name, email)
+          VALUES (?, ?, ?, ?, ?);`,
+        [username, hashedPassword, first_name, last_name, email]
+      );
+
+      const [users] = await connection.query(
+        `SELECT 
+        users.id, 
+        users.username, 
+        users.password, 
+        users.first_name, 
+        users.last_name, 
+        users.email, 
+        users.created_at,
+        JSON_ARRAYAGG(
+            CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
+        ) AS liked_mixes
+        FROM users
+        LEFT JOIN mix_likes ON users.id = mix_likes.user_id
+        WHERE users.username = ?
+        GROUP BY users.id;`,
+        username
+      );
+
+      return users[0];
+    } catch (e) {
+      throw new Error(e);
+    }
+  };
 }

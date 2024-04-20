@@ -14,11 +14,12 @@ const connection = await mysql.createConnection(connectionString);
 
 export class FlavourModel {
   getAll = async ({ brand }) => {
-    if (brand) {
-      const lowerCaseBrand = brand.toLowerCase();
+    try {
+      if (brand) {
+        const lowerCaseBrand = brand.toLowerCase();
 
-      const [flavours] = await connection.query(
-        `SELECT flavours.id, flavours.name AS flavour_name, flavours.description, brands.name AS brand_name,
+        const [flavours] = await connection.query(
+          `SELECT flavours.id, flavours.name AS flavour_name, flavours.description, brands.name AS brand_name,
          JSON_ARRAYAGG(
            JSON_OBJECT(
              'id', categories.id,
@@ -31,14 +32,14 @@ export class FlavourModel {
         JOIN categories ON flavour_categories.category_id = categories.id
         WHERE brands.name = ?
         GROUP BY flavours.id;`,
-        [lowerCaseBrand]
-      );
+          [lowerCaseBrand]
+        );
 
-      return flavours;
-    }
+        return flavours;
+      }
 
-    const [flavours] = await connection.query(
-      `SELECT flavours.id, flavours.name AS flavour_name, flavours.description, brands.name AS brand_name,
+      const [flavours] = await connection.query(
+        `SELECT flavours.id, flavours.name AS flavour_name, flavours.description, brands.name AS brand_name,
        JSON_ARRAYAGG(
          JSON_OBJECT(
            'id', categories.id,
@@ -50,14 +51,18 @@ export class FlavourModel {
       JOIN flavour_categories ON flavours.id = flavour_categories.flavour_id
       JOIN categories ON flavour_categories.category_id = categories.id
       GROUP BY flavours.id;`
-    );
+      );
 
-    return flavours;
+      return flavours;
+    } catch (error) {
+      throw new Error(error);
+    }
   };
 
   getById = async ({ id }) => {
-    const [flavours] = await connection.query(
-      `SELECT flavours.id, flavours.name AS flavour_name, flavours.description, brands.name AS brand_name,
+    try {
+      const [flavours] = await connection.query(
+        `SELECT flavours.id, flavours.name AS flavour_name, flavours.description, brands.name AS brand_name,
        JSON_ARRAYAGG(
          JSON_OBJECT(
            'id', categories.id,
@@ -70,29 +75,32 @@ export class FlavourModel {
       JOIN categories ON flavour_categories.category_id = categories.id
       WHERE flavours.id = ?
       GROUP BY flavours.id;`,
-      [id]
-    );
+        [id]
+      );
 
-    if (flavours.length === 0) return null;
+      if (flavours.length === 0) return null;
 
-    return flavours[0];
+      return flavours[0];
+    } catch (error) {
+      throw new Error(error);
+    }
   };
 
   create = async ({ input }) => {
     const { name, description, brand, flavour_categories } = input;
 
-    const [brandIdResult] = await connection.query(
-      "SELECT id FROM brands WHERE name = ?",
-      brand
-    );
-
-    if (brandIdResult.length === 0) {
-      throw new Error("Brand not exist");
-    }
-
-    const brandId = brandIdResult[0].id;
-
     try {
+      const [brandIdResult] = await connection.query(
+        "SELECT id FROM brands WHERE name = ?",
+        brand
+      );
+
+      if (brandIdResult.length === 0) {
+        throw new Error("Brand not exist");
+      }
+
+      const brandId = brandIdResult[0].id;
+
       // Insertar el sabor
       await connection.query(
         `INSERT INTO flavours (name, description, brand_id)
@@ -153,7 +161,7 @@ export class FlavourModel {
 
       return flavour;
     } catch (e) {
-      throw new Error("Error creating the flavour ->" + e);
+      throw new Error(e);
     }
   };
 
@@ -287,7 +295,7 @@ export class FlavourModel {
         throw new Error("No data entered");
       }
     } catch (error) {
-      throw new Error("Error updating the flavour -> " + error);
+      throw new Error(error);
     }
   };
 }

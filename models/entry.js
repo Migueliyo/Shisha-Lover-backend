@@ -14,11 +14,12 @@ const connection = await mysql.createConnection(connectionString);
 
 export class EntryModel {
   getAll = async ({ category }) => {
-    if (category) {
-      const lowerCaseCategory = category.toLowerCase();
+    try {
+      if (category) {
+        const lowerCaseCategory = category.toLowerCase();
 
-      const [entries] = await connection.query(
-        `SELECT entries.id, users.username AS username, entries.title AS entry_title, entries.description,
+        const [entries] = await connection.query(
+          `SELECT entries.id, users.username AS username, entries.title AS entry_title, entries.description,
          JSON_ARRAYAGG(
            JSON_OBJECT(
              'id', categories.id,
@@ -31,14 +32,14 @@ export class EntryModel {
          JOIN categories ON entry_categories.category_id = categories.id
          WHERE categories.name = ?
          GROUP BY entries.id;`,
-         [lowerCaseCategory]
-      );
+          [lowerCaseCategory]
+        );
 
-      return entries;
-    }
+        return entries;
+      }
 
-    const [entries] = await connection.query(
-      `SELECT entries.id, users.username AS username, entries.title AS entry_title, entries.description,
+      const [entries] = await connection.query(
+        `SELECT entries.id, users.username AS username, entries.title AS entry_title, entries.description,
        JSON_ARRAYAGG(
          JSON_OBJECT(
            'id', categories.id,
@@ -50,14 +51,18 @@ export class EntryModel {
        JOIN entry_categories ON entries.id = entry_categories.entry_id
        JOIN categories ON entry_categories.category_id = categories.id
        GROUP BY entries.id;`
-    );
+      );
 
-    return entries;
+      return entries;
+    } catch (error) {
+      throw new Error(error);
+    }
   };
 
   getById = async ({ id }) => {
-    const [entries] = await connection.query(
-      `SELECT entries.id, users.username AS username, entries.title AS entry_title, entries.description,
+    try {
+      const [entries] = await connection.query(
+        `SELECT entries.id, users.username AS username, entries.title AS entry_title, entries.description,
        JSON_ARRAYAGG(
          JSON_OBJECT(
            'id', categories.id,
@@ -70,29 +75,32 @@ export class EntryModel {
        JOIN categories ON entry_categories.category_id = categories.id
        WHERE entries.id = ?
        GROUP BY entries.id;`,
-      [id]
-    );
+        [id]
+      );
 
-    if (entries.length === 0) return null;
+      if (entries.length === 0) return null;
 
-    return entries[0];
+      return entries[0];
+    } catch (error) {
+      throw new Error(error);
+    }
   };
 
   create = async ({ input }) => {
     const { username, title, description, entry_categories } = input;
 
-    const [userIdResult] = await connection.query(
-      "SELECT id FROM users WHERE username = ?",
-      username
-    );
-
-    if (userIdResult.length === 0) {
-      throw new Error("User not exist");
-    }
-
-    const userId = userIdResult[0].id;
-
     try {
+      const [userIdResult] = await connection.query(
+        "SELECT id FROM users WHERE username = ?",
+        username
+      );
+
+      if (userIdResult.length === 0) {
+        throw new Error("User not exist");
+      }
+
+      const userId = userIdResult[0].id;
+
       // Insertar la entrada
       await connection.query(
         `INSERT INTO entries (user_id, title, description)
@@ -153,7 +161,7 @@ export class EntryModel {
 
       return entry;
     } catch (e) {
-      throw new Error("Error creating the entry ->" + e);
+      throw new Error(e);
     }
   };
 
@@ -201,7 +209,7 @@ export class EntryModel {
           "SELECT id FROM users WHERE username = ?",
           username
         );
-    
+
         if (userIdResult.length === 0) {
           throw new Error("User not exist");
         }
@@ -267,7 +275,7 @@ export class EntryModel {
         (result2 && result2.affectedRows > 0)
       ) {
         const [entries] = await connection.query(
-            `SELECT entries.id, users.username AS username, entries.title AS entry_title, entries.description,
+          `SELECT entries.id, users.username AS username, entries.title AS entry_title, entries.description,
             JSON_ARRAYAGG(
               JSON_OBJECT(
                 'id', categories.id,
@@ -280,14 +288,14 @@ export class EntryModel {
             JOIN categories ON entry_categories.category_id = categories.id
             WHERE entries.id = ?
             GROUP BY entries.id;`,
-           [id]
+          [id]
         );
         return entries[0];
       } else {
         throw new Error("No data entered");
       }
     } catch (error) {
-      throw new Error("Error updating the entry -> " + error);
+      throw new Error(error);
     }
   };
 }

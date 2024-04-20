@@ -14,8 +14,9 @@ const connection = await mysql.createConnection(connectionString);
 
 export class MixModel {
   getAll = async ({ category, flavour }) => {
-    let lowerCaseCategory, lowerCaseFlavour;
-    let query = `
+    try {
+      let lowerCaseCategory, lowerCaseFlavour;
+      let query = `
         SELECT 
         mixes.id, 
         mixes.name AS mix_name, 
@@ -41,13 +42,13 @@ export class MixModel {
             ) AS unique_categories
             JOIN categories c ON unique_categories.category_id = c.id`;
 
-    if (category) {
-      lowerCaseCategory = category.toLowerCase();
-      query += `
+      if (category) {
+        lowerCaseCategory = category.toLowerCase();
+        query += `
             WHERE c.name = ?`;
-    }
+      }
 
-    query += `
+      query += `
             ) AS categories
         FROM mixes
         JOIN users ON mixes.user_id = users.id
@@ -55,30 +56,34 @@ export class MixModel {
         JOIN flavours ON mix_flavours.flavour_id = flavours.id
         LEFT JOIN mix_likes ON mixes.id = mix_likes.mix_id`;
 
-    if (flavour) {
-      lowerCaseFlavour = flavour.toLowerCase();
-      query += `
+      if (flavour) {
+        lowerCaseFlavour = flavour.toLowerCase();
+        query += `
         WHERE flavours.name = ?`;
-    }
+      }
 
-    query += `
+      query += `
         GROUP BY mixes.id, mixes.name, users.username
         HAVING categories IS NOT NULL`;
 
-    let params = [];
-    if (category && flavour) {
-      params = [lowerCaseCategory, lowerCaseFlavour];
-    } else if (category) {
-      params = [lowerCaseCategory];
-    } else if (flavour) {
-      params = [lowerCaseFlavour];
-    }
+      let params = [];
+      if (category && flavour) {
+        params = [lowerCaseCategory, lowerCaseFlavour];
+      } else if (category) {
+        params = [lowerCaseCategory];
+      } else if (flavour) {
+        params = [lowerCaseFlavour];
+      }
 
-    const [mixes] = await connection.query(query, params);
-    return mixes;
+      const [mixes] = await connection.query(query, params);
+      return mixes;
+    } catch (error) {
+      throw new Error(error);
+    }
   };
 
   getById = async ({ id }) => {
+    try {
     const [mixes] = await connection.query(
       `SELECT 
       mixes.id, 
@@ -117,6 +122,9 @@ export class MixModel {
     if (mixes.length === 0) return null;
 
     return mixes;
+    } catch(error) {
+      throw new Error(error)
+    }
   };
 
   create = async ({ input }) => {
@@ -217,10 +225,10 @@ export class MixModel {
       if (mixId !== null) {
         await connection.query("DELETE FROM mixes WHERE id = ?", mixId);
       }
-      throw new Error("Error creating a new mix -> " + error);
+      throw new Error(error);
     }
   };
-  
+
   delete = async ({ id }) => {
     try {
       const [result1] = await connection.query(
@@ -239,7 +247,7 @@ export class MixModel {
         return false;
       }
     } catch (error) {
-      throw new Error("Error deleting the mix: " + error);
+      throw new Error(error);
     }
   };
 
@@ -345,10 +353,10 @@ export class MixModel {
         throw new Error("No data entered");
       }
     } catch (error) {
-      throw new Error("Error updating the mix -> " + error);
+      throw new Error(error);
     }
   };
-  
+
   // Método para agregar un like a una mezcla
   addLike = async ({ id, userId }) => {
     try {
@@ -370,7 +378,7 @@ export class MixModel {
 
       return insertResult.insertId; // Devolver el ID del like insertado
     } catch (error) {
-      throw new Error("Error adding like to mix -> " + error);
+      throw new Error(error);
     }
   };
 
@@ -401,7 +409,7 @@ export class MixModel {
         return false;
       }
     } catch (error) {
-      throw new Error("Error removing like from mix -> " + error);
+      throw new Error(error);
     }
   };
 }

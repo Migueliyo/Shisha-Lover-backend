@@ -9,14 +9,14 @@ export class MixController {
     const { category } = req.query
     const { flavour } = req.query
     const mixes = await this.mixModel.getAll({ category, flavour })
-    res.json(mixes)
+    res.json({error: false, data: mixes})
   }
 
   getById = async (req, res) => {
     const { id } = req.params
     const mix = await this.mixModel.getById({ id })
-    if (mix) return res.json(mix)
-    res.status(404).json({ message: 'Mix not found' })
+    if (mix) return res.json({error: false, data: mix})
+    res.status(404).json({ error: true, message: 'Mix not found' })
   }
 
   create = async (req, res) => {
@@ -24,14 +24,14 @@ export class MixController {
       const result = validateMix(req.body)
   
       if (!result.success) {
-        return res.status(400).json({ error: JSON.parse(result.error.message) })
+        return res.status(400).json({ error: true, message: JSON.parse(result.error.message) })
       }
   
       const newMix = await this.mixModel.create({ input: result.data })
   
-      res.status(201).json(newMix)
+      res.status(201).json({ error: false, data: newMix })
     } catch (error) {
-      res.status(400).json({ message: error.message })
+      res.status(400).json({ error: true, message: error.message })
     }
   }
   
@@ -42,10 +42,10 @@ export class MixController {
     const result = await this.mixModel.delete({ id })
 
     if (result === false) {
-      return res.status(404).json({ message: 'Mix not found' })
+      return res.status(404).json({ error: true, message: 'Mix not found' })
     }
 
-    return res.json({ message: 'Mix deleted' })
+    return res.json({ error: false, message: 'Mix deleted' })
   }
 
   update = async (req, res) => {
@@ -53,17 +53,17 @@ export class MixController {
       const result = validatePartialMix(req.body)
 
       if (!result.success) {
-        return res.status(400).json({ error: JSON.parse(result.error.message) })
+        return res.status(400).json({ error: true, message: JSON.parse(result.error.message) })
       }
   
       const { id } = req.params
   
       const updatedMix = await this.mixModel.update({ id, input: result.data })
   
-      return res.json(updatedMix)
+      return res.json({ error: false, data: updatedMix })
     } catch (error) {
       console.log(error)
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ error: true, message: error.message })
     }
   }
 
@@ -73,9 +73,9 @@ export class MixController {
       // const userId = 1;
       const userId = req.user.id; 
       await this.mixModel.addLike({ id, userId });
-      res.json({ message: 'Like added successfully' });
+      res.json({ error: false, message: 'Like added successfully' });
     } catch (error) {
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ erorr: true, message: error.message });
     }
   }
 
@@ -85,9 +85,9 @@ export class MixController {
       // const userId = 1;
       const userId = req.user.id; 
       await this.mixModel.removeLike({ id, userId });
-      res.json({ message: 'Like removed successfully' });
+      res.json({ error: false, message: 'Like removed successfully' });
     } catch (error) {
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ error: true, message: error.message });
     }
   }
 }
