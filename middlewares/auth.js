@@ -7,7 +7,7 @@ export const authenticationMiddleware = (req, res, next) => {
     const token = authorizationHeader.split(" ")[1]; // Obtiene el token sin "Bearer "
     jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
       if (err) {
-        return res.status(403).json({ error: true, message: 'Failed to authenticate token.' });
+        return res.status(403).json({ error: true, message: 'Invalid token.' });
       }
       req.user = user;
       next();

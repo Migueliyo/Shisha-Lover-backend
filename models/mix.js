@@ -127,14 +127,14 @@ export class MixModel {
     }
   };
 
-  create = async ({ input }) => {
-    const { name, username, mix_flavours } = input;
+  create = async ({ userId, input }) => {
+    const { name, mix_flavours } = input;
     let mixId = null; // Inicializar mixId con un valor predeterminado
 
     try {
       const [existingUser] = await connection.query(
-        "SELECT * FROM users WHERE username = ?;",
-        [username]
+        "SELECT * FROM users WHERE id = ?;",
+        [userId]
       );
 
       if (existingUser.length === 0) {
@@ -144,8 +144,8 @@ export class MixModel {
       // Insertar la mezcla
       const [insertResult] = await connection.query(
         `INSERT INTO mixes (user_id, name)
-          VALUES ((SELECT id FROM users WHERE username = ?), ?);`,
-        [username, name]
+          VALUES (?, ?);`,
+        [userId, name]
       );
 
       // Obtener el id de la mezcla recién insertada
@@ -229,16 +229,34 @@ export class MixModel {
     }
   };
 
-  delete = async ({ id }) => {
+  delete = async ({ id, userId }) => {
     try {
+      const [existingUser] = await connection.query(
+        "SELECT * FROM users WHERE id = ?;",
+        [userId]
+      );
+
+      if (existingUser.length === 0) {
+        throw new Error("User not found");
+      }
+
+      const [existingMix] = await connection.query(
+        "SELECT * FROM mixes WHERE id = ? AND user_id = ?;",
+        [id, userId]
+      );
+
+      if (existingMix.length === 0) {
+        throw new Error("Mix not found");
+      }
+
       const [result1] = await connection.query(
         "DELETE FROM mix_flavours WHERE mix_id = ?;",
         [id]
       );
 
       const [result2] = await connection.query(
-        "DELETE FROM mixes WHERE id = ?;",
-        [id]
+        "DELETE FROM mixes WHERE id = ? AND user_id = ?;",
+        [id, userId]
       );
 
       if (result1.affectedRows > 0 && result2.affectedRows > 0) {
@@ -251,13 +269,22 @@ export class MixModel {
     }
   };
 
-  update = async ({ id, input }) => {
+  update = async ({ id, userId, input }) => {
     const { name, mix_flavours } = input;
 
     try {
+      const [existingUser] = await connection.query(
+        "SELECT * FROM users WHERE id = ?;",
+        [userId]
+      );
+
+      if (existingUser.length === 0) {
+        throw new Error("User not found");
+      }
+
       const [existingMix] = await connection.query(
-        "SELECT * FROM mixes WHERE id = ?;",
-        [id]
+        "SELECT * FROM mixes WHERE id = ? AND user_id = ?;",
+        [id, userId]
       );
 
       if (existingMix.length === 0) {
@@ -302,8 +329,8 @@ export class MixModel {
       if (name != undefined) {
         // Actualizar el nombre de la mezcla
         [result2] = await connection.query(
-          "UPDATE mixes SET name = ? WHERE id = ?",
-          [name, id]
+          "UPDATE mixes SET name = ? WHERE id = ? AND user_id = ?",
+          [name, id, userId]
         );
       }
 
@@ -376,7 +403,11 @@ export class MixModel {
         [userId, id]
       );
 
-      return insertResult.insertId; // Devolver el ID del like insertado
+      if (insertResult.affectedRows > 0) {
+        return true;
+      } else {
+        return false;
+      }
     } catch (error) {
       throw new Error(error);
     }
@@ -399,8 +430,8 @@ export class MixModel {
 
       // Eliminar el like
       const [deleteResult] = await connection.query(
-        "DELETE FROM mix_likes WHERE id = ?;",
-        [likeId]
+        "DELETE FROM mix_likes WHERE id = ? AND user_id = ?;",
+        [likeId, userId]
       );
 
       if (deleteResult.affectedRows > 0) {

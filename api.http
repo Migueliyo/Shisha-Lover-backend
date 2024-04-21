@@ -106,7 +106,6 @@ Content-Type: application/json
 
 {
   "name": "Mezcla definitiva",
-  "username": "migueliyo",
   "mix_flavours": [
     {
       "flavour_name": "Jungle",
@@ -231,7 +230,6 @@ POST http://localhost:1234/api/entries
 Content-Type: application/json
 
 {
-  "username": "migueliyo",
   "title": "Las mejores marcas de cachimba de 2024",
   "description": "Las mejores marcas de cachimba de 2024",
   "entry_categories": [

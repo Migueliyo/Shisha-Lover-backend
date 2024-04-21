@@ -13,10 +13,6 @@ const mixSchema = z.object({
     invalid_type_error: "Mix name must be a string",
     required_error: "Mix name is required.",
   }),
-  username: z.string({
-    invalid_type_error: "Username must be a string",
-    required_error: "Username is required.",
-  }),
   mix_flavours: z.array(mixFlavourSchema),
 });
 

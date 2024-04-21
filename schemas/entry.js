@@ -12,10 +12,6 @@ const entrySchema = z.object({
     invalid_type_error: "Title must be a string",
     required_error: "Title is required.",
   }),
-  username: z.string({
-    invalid_type_error: "Username must be a string",
-    required_error: "Username is required.",
-  }),
   description: z.string({
     invalid_type_error: "Description must be a string",
     required_error: "Description is required.",

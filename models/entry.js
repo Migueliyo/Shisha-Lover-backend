@@ -86,34 +86,28 @@ export class EntryModel {
     }
   };
 
-  create = async ({ input }) => {
-    const { username, title, description, entry_categories } = input;
+  create = async ({ userId, input }) => {
+    const { title, description, entry_categories } = input;
 
     try {
-      const [userIdResult] = await connection.query(
-        "SELECT id FROM users WHERE username = ?",
-        username
+      const [existingUser] = await connection.query(
+        "SELECT * FROM users WHERE id = ?;",
+        [userId]
       );
 
-      if (userIdResult.length === 0) {
-        throw new Error("User not exist");
+      if (existingUser.length === 0) {
+        throw new Error("User not found");
       }
 
-      const userId = userIdResult[0].id;
-
       // Insertar la entrada
-      await connection.query(
+      const [entryResult] = await connection.query(
         `INSERT INTO entries (user_id, title, description)
           VALUES (?, ?, ?);`,
         [userId, title, description]
       );
 
       // Obtener el id de la entrada recién insertada
-      const [entryResult] = await connection.query(
-        `SELECT id FROM entries WHERE title = ?`,
-        [title]
-      );
-      const entryId = entryResult[0].id;
+      const entryId = entryResult.insertId;
 
       // Insertar entry_categories
       for (const entry_category of entry_categories) {
@@ -165,16 +159,34 @@ export class EntryModel {
     }
   };
 
-  delete = async ({ id }) => {
+  delete = async ({ id, userId }) => {
     try {
+      const [existingUser] = await connection.query(
+        "SELECT * FROM users WHERE id = ?;",
+        [userId]
+      );
+
+      if (existingUser.length === 0) {
+        throw new Error("User not found");
+      }
+
+      const [existingEntry] = await connection.query(
+        "SELECT * FROM entries WHERE id = ? AND user_id = ?",
+        [id, userId]
+      );
+
+      if (existingEntry.length === 0) {
+        throw new Error("Entry not found");
+      }
+
       const [result1] = await connection.query(
         "DELETE FROM entry_categories WHERE entry_id = ?",
         [id]
       );
 
       const [result2] = await connection.query(
-        "DELETE FROM entries WHERE id = ?",
-        [id]
+        "DELETE FROM entries WHERE id = ? AND user_id = ?",
+        [id, userId]
       );
 
       if (result1.affectedRows > 0 && result2.affectedRows > 0) {
@@ -183,17 +195,26 @@ export class EntryModel {
         return false;
       }
     } catch (error) {
-      throw new Error("Error deleting the entry");
+      throw new Error(error);
     }
   };
 
-  update = async ({ id, input }) => {
-    const { username, title, description, entry_categories } = input;
+  update = async ({ id, userId, input }) => {
+    const { title, description, entry_categories } = input;
 
     try {
+      const [existingUser] = await connection.query(
+        "SELECT * FROM users WHERE id = ?;",
+        [userId]
+      );
+
+      if (existingUser.length === 0) {
+        throw new Error("User not found");
+      }
+
       const [existingEntry] = await connection.query(
-        "SELECT * FROM entries WHERE id = ?",
-        [id]
+        "SELECT * FROM entries WHERE id = ? AND user_id = ?",
+        [id, userId]
       );
 
       if (existingEntry.length === 0) {
@@ -203,20 +224,6 @@ export class EntryModel {
       const updateFields = [];
       const updateValues = [];
       let result1, result2;
-
-      if (username !== undefined) {
-        const [userIdResult] = await connection.query(
-          "SELECT id FROM users WHERE username = ?",
-          username
-        );
-
-        if (userIdResult.length === 0) {
-          throw new Error("User not exist");
-        }
-
-        updateFields.push("user_id = ?");
-        updateValues.push(userIdResult[0].id);
-      }
 
       if (title !== undefined) {
         updateFields.push("title = ?");
@@ -264,8 +271,8 @@ export class EntryModel {
 
       if (updateFields.length > 0) {
         [result2] = await connection.query(
-          `UPDATE entries SET ${updateFields.join(", ")} WHERE id = ?`,
-          [...updateValues, id]
+          `UPDATE entries SET ${updateFields.join(", ")} WHERE id = ? AND user_id = ?`,
+          [...updateValues, id, userId]
         );
       }
 
