@@ -33,6 +33,7 @@ export class AuthModel {
       // create token
       const jwtToken = jwt.sign(
         {
+          id: user[0].id,
           username: user[0].username,
           email: user[0].email,
           first_name: user[0].first_name,
