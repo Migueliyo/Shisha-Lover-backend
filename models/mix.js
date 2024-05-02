@@ -84,8 +84,8 @@ export class MixModel {
 
   getById = async ({ id }) => {
     try {
-    const [mixes] = await connection.query(
-      `SELECT 
+      const [mixes] = await connection.query(
+        `SELECT 
       mixes.id, 
       mixes.name AS mix_name, 
       users.username AS username, 
@@ -116,14 +116,14 @@ export class MixModel {
       JOIN flavours ON mix_flavours.flavour_id = flavours.id
       WHERE mixes.id = ?
       GROUP BY mixes.id, mixes.name, users.username;`,
-      [id]
-    );
+        [id]
+      );
 
-    if (mixes.length === 0) return null;
+      if (mixes.length === 0) return null;
 
-    return mixes;
-    } catch(error) {
-      throw new Error(error)
+      return mixes;
+    } catch (error) {
+      throw new Error(error);
     }
   };
 
@@ -249,6 +249,11 @@ export class MixModel {
         throw new Error("Mix not found");
       }
 
+      const [result0] = await connection.query(
+        "DELETE FROM mix_likes WHERE mix_id = ?;",
+        [id]
+      );
+
       const [result1] = await connection.query(
         "DELETE FROM mix_flavours WHERE mix_id = ?;",
         [id]
@@ -259,7 +264,11 @@ export class MixModel {
         [id, userId]
       );
 
-      if (result1.affectedRows > 0 && result2.affectedRows > 0) {
+      if (
+        result0.affectedRows > 0 &&
+        result1.affectedRows > 0 &&
+        result2.affectedRows > 0
+      ) {
         return true;
       } else {
         return false;
