@@ -9,6 +9,7 @@ import { createEntryRouter } from './routes/entries.js'
 
 import { corsMiddleware } from './middlewares/cors.js'
 import { authenticationMiddleware } from './middlewares/auth.js'
+import { uploadMiddleware } from './middlewares/upload.js';
 
 import { AuthModel } from './models/auth.js'
 import { FlavourModel } from './models/flavour.js'
@@ -28,6 +29,7 @@ const entryModel = new EntryModel();
 app.use(json())
 app.use(corsMiddleware())
 app.use('/api', authenticationMiddleware)
+app.use('/upload', uploadMiddleware)
 
 app.disable('x-powered-by')
 
