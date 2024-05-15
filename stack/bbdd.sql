@@ -29,6 +29,7 @@ CREATE TABLE users (
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
+    avatar VARCHAR(255),
     disabled BOOLEAN NOT NULL DEFAULT (false),
     created_at TIMESTAMP NOT NULL DEFAULT (NOW())
 );

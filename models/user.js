@@ -24,6 +24,7 @@ export class UserModel {
         users.first_name, 
         users.last_name, 
         users.email, 
+        users.avatar,
         users.created_at,
         JSON_ARRAYAGG(
             CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
@@ -49,6 +50,7 @@ export class UserModel {
         users.first_name, 
         users.last_name, 
         users.email, 
+        users.avatar,
         users.created_at,
         JSON_ARRAYAGG(
             CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
@@ -88,6 +90,7 @@ export class UserModel {
         users.first_name, 
         users.last_name, 
         users.email, 
+        users.avatar,
         users.created_at,
         JSON_ARRAYAGG(
             CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
@@ -180,6 +183,7 @@ export class UserModel {
               users.first_name, 
               users.last_name, 
               users.email, 
+              users.avatar,
               users.created_at,
               JSON_ARRAYAGG(
                   CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
@@ -197,6 +201,23 @@ export class UserModel {
       }
     } catch (error) {
       throw new Error(error);
+    }
+  };
+
+  updateAvatar = async ({ id, avatar }) => {
+    try {
+      const [result] = await connection.query(
+        "UPDATE users SET avatar = ? WHERE id = ?",
+        [avatar, id]
+      );
+
+      if (result.affectedRows > 0) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      throw new Error("Error updating the avatar");
     }
   };
 }

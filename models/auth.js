@@ -38,6 +38,7 @@ export class AuthModel {
           email: user[0].email,
           first_name: user[0].first_name,
           last_name: user[0].last_name,
+          avatar: user[0].avatar,
           created_at: user[0].created_at
         },
         process.env.TOKEN_SECRET
