@@ -24,11 +24,11 @@ export class AuthModel {
         email
       );
 
-      if (user.length === 0) throw new Error("User not found");
+      if (user.length === 0) throw new Error("Usuario no encontrado.");
 
       const validPassword = await bcrypt.compare(password, user[0].password);
 
-      if (!validPassword) throw new Error("Incorrect password");
+      if (!validPassword) throw new Error("Contraseña incorrecta.");
 
       // create token
       const jwtToken = jwt.sign(

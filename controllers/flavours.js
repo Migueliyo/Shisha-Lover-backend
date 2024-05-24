@@ -8,7 +8,10 @@ export class FlavourController {
   getAll = async (req, res) => {
     const { brand } = req.query
     const flavours = await this.flavourModel.getAll({ brand })
-    res.json({error: false, data: flavours})
+    if (flavours.length === 0) {
+      return res.status(404).json({ error: true, message: "No flavours found" });
+    }
+    res.json({ error: false, data: flavours });
   }
 
   getById = async (req, res) => {

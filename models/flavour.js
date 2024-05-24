@@ -14,11 +14,13 @@ const connection = await mysql.createConnection(connectionString);
 
 export class FlavourModel {
   getAll = async ({ brand }) => {
+    let flavours = [];
+
     try {
       if (brand) {
         const lowerCaseBrand = brand.toLowerCase();
 
-        const [flavours] = await connection.query(
+        [flavours] = await connection.query(
           `SELECT flavours.id, flavours.name AS flavour_name, flavours.description, brands.name AS brand_name,
          JSON_ARRAYAGG(
            JSON_OBJECT(
@@ -38,7 +40,7 @@ export class FlavourModel {
         return flavours;
       }
 
-      const [flavours] = await connection.query(
+      [flavours] = await connection.query(
         `SELECT flavours.id, flavours.name AS flavour_name, flavours.description, brands.name AS brand_name,
        JSON_ARRAYAGG(
          JSON_OBJECT(

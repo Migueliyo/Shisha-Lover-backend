@@ -14,6 +14,8 @@ const connection = await mysql.createConnection(connectionString);
 
 export class MixModel {
   getAll = async ({ category, flavour }) => {
+    let mixes = [];
+
     try {
       let lowerCaseCategory, lowerCaseFlavour;
       let query = `
@@ -75,7 +77,8 @@ export class MixModel {
         params = [lowerCaseFlavour];
       }
 
-      const [mixes] = await connection.query(query, params);
+      [mixes] = await connection.query(query, params);
+      
       return mixes;
     } catch (error) {
       throw new Error(error);

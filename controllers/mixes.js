@@ -6,9 +6,11 @@ export class MixController {
   }
 
   getAll = async (req, res) => {
-    const { category } = req.query;
-    const { flavour } = req.query;
+    const { category, flavour } = req.query;
     const mixes = await this.mixModel.getAll({ category, flavour });
+    if (mixes.length === 0) {
+      return res.status(404).json({ error: true, message: "No mixes found" });
+    }
     res.json({ error: false, data: mixes });
   };
 

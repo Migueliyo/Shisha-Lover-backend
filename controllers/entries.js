@@ -8,6 +8,9 @@ export class EntryController {
   getAll = async (req, res) => {
     const { category } = req.query;
     const entries = await this.entryModel.getAll({ category });
+    if (entries.length === 0) {
+      return res.status(404).json({ error: true, message: "No entries found" });
+    }
     res.json({ error: false, data: entries });
   };
 

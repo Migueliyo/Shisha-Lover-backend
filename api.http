@@ -95,7 +95,7 @@ GET http://localhost:1234/api/mixes/2
 GET http://localhost:1234/api/mixes?flavour=forever
 
 ### Recuperar todas las mezclas por un tipo
-GET http://localhost:1234/api/mixes?&category=afrutado
+GET http://localhost:1234/api/mixes?category=afrutado
 
 ### Recuperar todas las mezclas por un tipo y un sabor concreto
 GET http://localhost:1234/api/mixes?flavour=jungle&category=afrutado
@@ -176,8 +176,14 @@ DELETE http://localhost:1234/api/mixes/3
 ### Recuperar todos los usuarios
 GET http://localhost:1234/api/users
 
-### Recuperar un sabor por id
+### Recuperar un usuario por id
 GET http://localhost:1234/api/users/1
+
+### Recuperar un usuario por email
+GET http://localhost:1234/api/users?email=miguel@gmail.com
+
+### Recuperar un usuario por username
+GET http://localhost:1234/api/users?username=migueliyo
 
 ### Crear un usuario con POST
 POST http://localhost:1234/api/users

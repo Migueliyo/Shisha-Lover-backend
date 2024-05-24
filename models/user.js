@@ -14,9 +14,59 @@ const connectionString = process.env.DATABASE_URL ?? DEFAULT_CONFIG;
 const connection = await mysql.createConnection(connectionString);
 
 export class UserModel {
-  getAll = async () => {
+  getAll = async ({ email, username }) => {
     try {
-      const [users] = await connection.query(
+      let users = [];
+      
+      if (email) {
+        [users] = await connection.query(
+          `SELECT 
+          users.id, 
+          users.username, 
+          users.password, 
+          users.first_name, 
+          users.last_name, 
+          users.email, 
+          users.avatar,
+          users.created_at,
+          JSON_ARRAYAGG(
+              CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
+          ) AS liked_mixes
+        FROM users
+        LEFT JOIN mix_likes ON users.id = mix_likes.user_id
+        WHERE users.email = ?
+        GROUP BY users.id;`,
+          [email]
+        );
+  
+        return users;
+      }
+  
+      if (username) {
+        [users] = await connection.query(
+          `SELECT 
+          users.id, 
+          users.username, 
+          users.password, 
+          users.first_name, 
+          users.last_name, 
+          users.email, 
+          users.avatar,
+          users.created_at,
+          JSON_ARRAYAGG(
+              CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
+          ) AS liked_mixes
+        FROM users
+        LEFT JOIN mix_likes ON users.id = mix_likes.user_id
+        WHERE users.username = ?
+        GROUP BY users.id;`,
+          [username]
+        );
+  
+        return users;
+      }
+  
+      [users] = await connection.query(
         `SELECT 
         users.id, 
         users.username, 
@@ -33,12 +83,13 @@ export class UserModel {
       LEFT JOIN mix_likes ON users.id = mix_likes.user_id
       GROUP BY users.id;`
       );
-
+  
       return users;
     } catch (error) {
       throw new Error(error);
     }
   };
+  
 
   getById = async ({ id }) => {
     try {
@@ -72,7 +123,7 @@ export class UserModel {
 
   create = async ({ input }) => {
     const { username, password, first_name, last_name, email } = input;
-    
+
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
 
