@@ -124,7 +124,7 @@ export class MixModel {
 
       if (mixes.length === 0) return null;
 
-      return mixes;
+      return mixes[0];
     } catch (error) {
       throw new Error(error);
     }
