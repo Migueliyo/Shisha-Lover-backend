@@ -27,6 +27,7 @@ export class UserModel {
           users.first_name, 
           users.last_name, 
           users.email, 
+          users.description,
           users.avatar,
           users.created_at,
           JSON_ARRAYAGG(
@@ -39,7 +40,7 @@ export class UserModel {
           [email]
         );
   
-        return users;
+        return users[0];
       }
   
       if (username) {
@@ -51,6 +52,7 @@ export class UserModel {
           users.first_name, 
           users.last_name, 
           users.email, 
+          users.description,
           users.avatar,
           users.created_at,
           JSON_ARRAYAGG(
@@ -63,7 +65,7 @@ export class UserModel {
           [username]
         );
   
-        return users;
+        return users[0];
       }
   
       [users] = await connection.query(
@@ -75,6 +77,7 @@ export class UserModel {
         users.last_name, 
         users.email, 
         users.avatar,
+        users.description,
         users.created_at,
         JSON_ARRAYAGG(
             CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
@@ -101,6 +104,7 @@ export class UserModel {
         users.first_name, 
         users.last_name, 
         users.email, 
+        users.description,
         users.avatar,
         users.created_at,
         JSON_ARRAYAGG(
@@ -122,15 +126,15 @@ export class UserModel {
   };
 
   create = async ({ input }) => {
-    const { username, password, first_name, last_name, email } = input;
+    const { username, password, first_name, last_name, email, description } = input;
 
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       await connection.query(
-        `INSERT INTO users (username, password, first_name, last_name, email)
+        `INSERT INTO users (username, password, first_name, last_name, email, description)
           VALUES (?, ?, ?, ?, ?);`,
-        [username, hashedPassword, first_name, last_name, email]
+        [username, hashedPassword, first_name, last_name, email, description]
       );
 
       const [users] = await connection.query(
@@ -142,6 +146,7 @@ export class UserModel {
         users.last_name, 
         users.email, 
         users.avatar,
+        users.description,
         users.created_at,
         JSON_ARRAYAGG(
             CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
@@ -234,6 +239,7 @@ export class UserModel {
               users.first_name, 
               users.last_name, 
               users.email, 
+              users.description,
               users.avatar,
               users.created_at,
               JSON_ARRAYAGG(
