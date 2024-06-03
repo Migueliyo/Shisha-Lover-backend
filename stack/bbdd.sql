@@ -30,6 +30,12 @@ CREATE TABLE users (
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     avatar VARCHAR(255),
+    description VARCHAR(255),
+    -- twitter VARCHAR(255),
+    -- instagram VARCHAR(255),
+    -- facebook VARCHAR(255),
+    -- youtube VARCHAR(255),
+    -- reddit VARCHAR(255),
     disabled BOOLEAN NOT NULL DEFAULT (false),
     created_at TIMESTAMP NOT NULL DEFAULT (NOW())
 );
@@ -125,8 +131,8 @@ INSERT INTO flavour_categories (flavour_id, category_id) VALUES ((SELECT id FROM
 INSERT INTO flavour_categories (flavour_id, category_id) VALUES ((SELECT id FROM flavours WHERE name = "Maca Roll"), (SELECT id FROM categories WHERE name = "Afrutado"));
 INSERT INTO flavour_categories (flavour_id, category_id) VALUES ((SELECT id FROM flavours WHERE name = "Maca Roll"), (SELECT id FROM categories WHERE name = "Dulce"));
 
-INSERT INTO users (username, password, first_name, last_name, email) VALUES ("migueliyo", "$2b$10$kPuJL7S/2dsvt1pUdxoiqujpbHT9VUeSBAry2iYDdu/bafVspfjpu", "Miguel", 
-"Colmenero", "miguel@gmail.com");
+INSERT INTO users (username, password, first_name, last_name, email, description) VALUES ("migueliyo", "$2b$10$kPuJL7S/2dsvt1pUdxoiqujpbHT9VUeSBAry2iYDdu/bafVspfjpu", "Miguel", 
+"Colmenero", "miguel@gmail.com", "Amante de las cachimbas");
 
 INSERT INTO mixes (user_id, name) VALUES ((SELECT id FROM users WHERE username = "migueliyo"), "Mezcla 1");
 INSERT INTO mix_flavours (mix_id, flavour_id, percentage) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 1"), (SELECT id FROM flavours WHERE name = "Richman"), 50);
