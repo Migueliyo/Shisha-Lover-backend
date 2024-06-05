@@ -182,7 +182,7 @@ export class UserModel {
   };
 
   update = async ({ id, input }) => {
-    const { username, password, first_name, last_name, email } = input;
+    const { username, password, first_name, last_name, email, description } = input;
 
     try {
       const [existingUser] = await connection.query(
@@ -221,6 +221,11 @@ export class UserModel {
       if (email !== undefined) {
         updateFields.push("email = ?");
         updateValues.push(email);
+      }
+
+      if (description !== undefined) {
+        updateFields.push("description = ?");
+        updateValues.push(description);
       }
 
       if (updateFields.length > 0) {
