@@ -17,103 +17,154 @@ export class UserModel {
   getAll = async ({ email, username }) => {
     try {
       let users = [];
-      
+
       if (email) {
         [users] = await connection.query(
           `SELECT 
-          users.id, 
-          users.username, 
-          users.password, 
-          users.first_name, 
-          users.last_name, 
-          users.email, 
-          users.description,
-          users.avatar,
-          users.created_at,
-          JSON_ARRAYAGG(
-              CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
-          ) AS liked_mixes
-        FROM users
-        LEFT JOIN mix_likes ON users.id = mix_likes.user_id
-        WHERE users.email = ?
-        GROUP BY users.id;`,
+            users.id, 
+            users.username, 
+            users.password, 
+            users.first_name, 
+            users.last_name, 
+            users.email, 
+            users.avatar,
+            users.description,
+            (
+                SELECT JSON_ARRAYAGG(social_media)
+                FROM (
+                    SELECT JSON_OBJECT('name', 'twitter', 'url', users.twitter) AS social_media
+                    UNION ALL
+                    SELECT JSON_OBJECT('name', 'instagram', 'url', users.instagram)
+                    UNION ALL
+                    SELECT JSON_OBJECT('name', 'facebook', 'url', users.facebook)
+                    UNION ALL
+                    SELECT JSON_OBJECT('name', 'youtube', 'url', users.youtube)
+                    UNION ALL
+                    SELECT JSON_OBJECT('name', 'reddit', 'url', users.reddit)
+                ) AS social_medias
+            ) AS social_media,
+            JSON_ARRAYAGG(
+                CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
+            ) AS liked_mixes
+          FROM users
+          LEFT JOIN mix_likes ON users.id = mix_likes.user_id
+          WHERE users.email = ?
+          GROUP BY users.id;`,
           [email]
         );
-  
+
         return users[0];
       }
-  
+
       if (username) {
         [users] = await connection.query(
           `SELECT 
+            users.id, 
+            users.username, 
+            users.password, 
+            users.first_name, 
+            users.last_name, 
+            users.email, 
+            users.avatar,
+            users.description,
+            (
+                SELECT JSON_ARRAYAGG(social_media)
+                FROM (
+                    SELECT JSON_OBJECT('name', 'twitter', 'url', users.twitter) AS social_media
+                    UNION ALL
+                    SELECT JSON_OBJECT('name', 'instagram', 'url', users.instagram)
+                    UNION ALL
+                    SELECT JSON_OBJECT('name', 'facebook', 'url', users.facebook)
+                    UNION ALL
+                    SELECT JSON_OBJECT('name', 'youtube', 'url', users.youtube)
+                    UNION ALL
+                    SELECT JSON_OBJECT('name', 'reddit', 'url', users.reddit)
+                ) AS social_medias
+            ) AS social_media,
+            JSON_ARRAYAGG(
+                CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
+            ) AS liked_mixes
+          FROM users
+          LEFT JOIN mix_likes ON users.id = mix_likes.user_id
+          WHERE users.username = ?
+          GROUP BY users.id;`,
+          [username]
+        );
+
+        return users[0];
+      }
+
+      [users] = await connection.query(
+        `SELECT 
           users.id, 
           users.username, 
           users.password, 
           users.first_name, 
           users.last_name, 
           users.email, 
-          users.description,
           users.avatar,
-          users.created_at,
+          users.description,
+          (
+              SELECT JSON_ARRAYAGG(social_media)
+              FROM (
+                  SELECT JSON_OBJECT('name', 'twitter', 'url', users.twitter) AS social_media
+                  UNION ALL
+                  SELECT JSON_OBJECT('name', 'instagram', 'url', users.instagram)
+                  UNION ALL
+                  SELECT JSON_OBJECT('name', 'facebook', 'url', users.facebook)
+                  UNION ALL
+                  SELECT JSON_OBJECT('name', 'youtube', 'url', users.youtube)
+                  UNION ALL
+                  SELECT JSON_OBJECT('name', 'reddit', 'url', users.reddit)
+              ) AS social_medias
+          ) AS social_media,
           JSON_ARRAYAGG(
               CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
           ) AS liked_mixes
         FROM users
         LEFT JOIN mix_likes ON users.id = mix_likes.user_id
-        WHERE users.username = ?
-        GROUP BY users.id;`,
-          [username]
-        );
-  
-        return users[0];
-      }
-  
-      [users] = await connection.query(
-        `SELECT 
-        users.id, 
-        users.username, 
-        users.password, 
-        users.first_name, 
-        users.last_name, 
-        users.email, 
-        users.avatar,
-        users.description,
-        users.created_at,
-        JSON_ARRAYAGG(
-            CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
-        ) AS liked_mixes
-      FROM users
-      LEFT JOIN mix_likes ON users.id = mix_likes.user_id
-      GROUP BY users.id;`
+        GROUP BY users.id;`
       );
-  
+
       return users;
     } catch (error) {
       throw new Error(error);
     }
   };
-  
 
   getById = async ({ id }) => {
     try {
       const [users] = await connection.query(
         `SELECT 
-        users.id, 
-        users.username, 
-        users.password, 
-        users.first_name, 
-        users.last_name, 
-        users.email, 
-        users.description,
-        users.avatar,
-        users.created_at,
-        JSON_ARRAYAGG(
-            CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
-        ) AS liked_mixes
-      FROM users
-      LEFT JOIN mix_likes ON users.id = mix_likes.user_id
-      WHERE users.id = ?
-      GROUP BY users.id;`,
+          users.id, 
+          users.username, 
+          users.password, 
+          users.first_name, 
+          users.last_name, 
+          users.email, 
+          users.avatar,
+          users.description,
+          (
+              SELECT JSON_ARRAYAGG(social_media)
+              FROM (
+                  SELECT JSON_OBJECT('name', 'twitter', 'url', users.twitter) AS social_media
+                  UNION ALL
+                  SELECT JSON_OBJECT('name', 'instagram', 'url', users.instagram)
+                  UNION ALL
+                  SELECT JSON_OBJECT('name', 'facebook', 'url', users.facebook)
+                  UNION ALL
+                  SELECT JSON_OBJECT('name', 'youtube', 'url', users.youtube)
+                  UNION ALL
+                  SELECT JSON_OBJECT('name', 'reddit', 'url', users.reddit)
+              ) AS social_medias
+          ) AS social_media,
+          JSON_ARRAYAGG(
+              CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
+          ) AS liked_mixes
+        FROM users
+        LEFT JOIN mix_likes ON users.id = mix_likes.user_id
+        WHERE users.id = ?
+        GROUP BY users.id;`,
         [id]
       );
 
@@ -126,7 +177,8 @@ export class UserModel {
   };
 
   create = async ({ input }) => {
-    const { username, password, first_name, last_name, email, description } = input;
+    const { username, password, first_name, last_name, email, description } =
+      input;
 
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -139,22 +191,35 @@ export class UserModel {
 
       const [users] = await connection.query(
         `SELECT 
-        users.id, 
-        users.username, 
-        users.password, 
-        users.first_name, 
-        users.last_name, 
-        users.email, 
-        users.avatar,
-        users.description,
-        users.created_at,
-        JSON_ARRAYAGG(
-            CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
-        ) AS liked_mixes
-      FROM users
-      LEFT JOIN mix_likes ON users.id = mix_likes.user_id
-      WHERE users.username = ?
-      GROUP BY users.id;`,
+          users.id, 
+          users.username, 
+          users.password, 
+          users.first_name, 
+          users.last_name, 
+          users.email, 
+          users.avatar,
+          users.description,
+          (
+              SELECT JSON_ARRAYAGG(social_media)
+              FROM (
+                  SELECT JSON_OBJECT('name', 'twitter', 'url', users.twitter) AS social_media
+                  UNION ALL
+                  SELECT JSON_OBJECT('name', 'instagram', 'url', users.instagram)
+                  UNION ALL
+                  SELECT JSON_OBJECT('name', 'facebook', 'url', users.facebook)
+                  UNION ALL
+                  SELECT JSON_OBJECT('name', 'youtube', 'url', users.youtube)
+                  UNION ALL
+                  SELECT JSON_OBJECT('name', 'reddit', 'url', users.reddit)
+              ) AS social_medias
+          ) AS social_media,
+          JSON_ARRAYAGG(
+              CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
+          ) AS liked_mixes
+        FROM users
+        LEFT JOIN mix_likes ON users.id = mix_likes.user_id
+        WHERE users.username = ?
+        GROUP BY users.id;`,
         username
       );
 
@@ -182,7 +247,19 @@ export class UserModel {
   };
 
   update = async ({ id, input }) => {
-    const { username, password, first_name, last_name, email, description } = input;
+    const {
+      username,
+      password,
+      first_name,
+      last_name,
+      email,
+      description,
+      twitter,
+      instagram,
+      facebook,
+      youtube,
+      reddit,
+    } = input;
 
     try {
       const [existingUser] = await connection.query(
@@ -228,6 +305,31 @@ export class UserModel {
         updateValues.push(description);
       }
 
+      if (twitter !== undefined) {
+        updateFields.push("twitter = ?");
+        updateValues.push(twitter);
+      }
+
+      if (instagram !== undefined) {
+        updateFields.push("instagram = ?");
+        updateValues.push(instagram);
+      }
+
+      if (facebook !== undefined) {
+        updateFields.push("facebook = ?");
+        updateValues.push(facebook);
+      }
+
+      if (youtube !== undefined) {
+        updateFields.push("youtube = ?");
+        updateValues.push(youtube);
+      }
+
+      if (reddit !== undefined) {
+        updateFields.push("reddit = ?");
+        updateValues.push(reddit);
+      }
+
       if (updateFields.length > 0) {
         const [result] = await connection.query(
           `UPDATE users SET ${updateFields.join(", ")} WHERE id = ?`,
@@ -244,9 +346,22 @@ export class UserModel {
               users.first_name, 
               users.last_name, 
               users.email, 
-              users.description,
               users.avatar,
-              users.created_at,
+              users.description,
+              (
+                  SELECT JSON_ARRAYAGG(social_media)
+                  FROM (
+                      SELECT JSON_OBJECT('name', 'twitter', 'url', users.twitter) AS social_media
+                      UNION ALL
+                      SELECT JSON_OBJECT('name', 'instagram', 'url', users.instagram)
+                      UNION ALL
+                      SELECT JSON_OBJECT('name', 'facebook', 'url', users.facebook)
+                      UNION ALL
+                      SELECT JSON_OBJECT('name', 'youtube', 'url', users.youtube)
+                      UNION ALL
+                      SELECT JSON_OBJECT('name', 'reddit', 'url', users.reddit)
+                  ) AS social_medias
+              ) AS social_media,
               JSON_ARRAYAGG(
                   CASE WHEN mix_likes.mix_id IS NOT NULL THEN JSON_OBJECT('mix_id', mix_likes.mix_id) ELSE NULL END
               ) AS liked_mixes

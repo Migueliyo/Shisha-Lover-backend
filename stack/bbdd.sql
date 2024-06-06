@@ -31,11 +31,11 @@ CREATE TABLE users (
     email VARCHAR(100) NOT NULL UNIQUE,
     avatar VARCHAR(255),
     description VARCHAR(255),
-    -- twitter VARCHAR(255),
-    -- instagram VARCHAR(255),
-    -- facebook VARCHAR(255),
-    -- youtube VARCHAR(255),
-    -- reddit VARCHAR(255),
+    twitter VARCHAR(255),
+    instagram VARCHAR(255),
+    facebook VARCHAR(255),
+    youtube VARCHAR(255),
+    reddit VARCHAR(255),
     disabled BOOLEAN NOT NULL DEFAULT (false),
     created_at TIMESTAMP NOT NULL DEFAULT (NOW())
 );
