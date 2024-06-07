@@ -107,4 +107,16 @@ export class MixController {
       res.status(400).json({ error: true, message: error.message });
     }
   };
+
+  checkLike = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const hasLiked = await this.mixModel.checkLike({ id, userId });
+
+      res.json({ error: false, data: { hasLiked } });
+    } catch (error) {
+      res.status(400).json({ error: true, message: error.message });
+    }
+  };
 }

@@ -165,6 +165,10 @@ Content-Type: application/json
 ### Agregar un like a una mezcla
 POST http://localhost:1234/api/mixes/1/like
 
+### Checkear un like
+GET http://localhost:1234/api/mixes/1/like
+Authorization: Bearer {...}
+
 ### Eliminar un like de una mezcla
 DELETE http://localhost:1234/api/mixes/1/like
 

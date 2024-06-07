@@ -455,4 +455,17 @@ export class MixModel {
       throw new Error(error);
     }
   };
+
+  checkLike = async ({ id, userId }) => {
+    try {
+      const [existingLike] = await connection.query(
+        "SELECT * FROM mix_likes WHERE user_id = ? AND mix_id = ?;",
+        [userId, id]
+      );
+
+      return existingLike.length > 0;
+    } catch (error) {
+      throw new Error(error);
+    }
+  };
 }
