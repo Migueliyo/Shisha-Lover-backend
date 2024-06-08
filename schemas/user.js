@@ -21,6 +21,7 @@ const userSchema = z.object({
     invalid_type_error: "Email must be a string",
     required_error: "Email is required.",
   }),
+  avatar: z.string({ invalid_type_error: "Avatar must be a string" }),
   description: z.string({ invalid_type_error: "Description must be a string" }),
   twitter: z.string({ invalid_type_error: "Twitter url must be a string" }),
   instagram: z.string({ invalid_type_error: "Instagram url must be a string" }),
