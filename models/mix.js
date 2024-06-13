@@ -20,6 +20,84 @@ export class MixModel {
       let lowerCaseCategory, lowerCaseFlavour;
       let query = `
         SELECT 
+          mixes.id, 
+          mixes.name AS mix_name, 
+          users.username AS username, 
+          (SELECT COUNT(*) 
+           FROM mix_likes 
+           WHERE mix_likes.mix_id = mixes.id) AS total_likes,
+          JSON_ARRAYAGG(
+              JSON_OBJECT(
+                  'id', flavours.id, 
+                  'name', flavours.name, 
+                  'percentage', mix_flavours.percentage
+              )
+          ) AS flavours, 
+          (
+              SELECT JSON_ARRAYAGG(JSON_OBJECT('id', category_id, 'name', c.name)) 
+              FROM (
+                  SELECT DISTINCT flavour_categories.category_id 
+                  FROM flavour_categories 
+                  JOIN mix_flavours ON flavour_categories.flavour_id = mix_flavours.flavour_id
+                  WHERE mix_flavours.mix_id = mixes.id
+              ) AS unique_categories
+              JOIN categories c ON unique_categories.category_id = c.id
+          ) AS categories,
+          (
+              SELECT JSON_ARRAYAGG(
+                  JSON_OBJECT(
+                      'id', mix_comments.id, 
+                      'user_id', mix_comments.user_id, 
+                      'content', mix_comments.content
+                  )
+              )
+              FROM mix_comments
+              WHERE mix_comments.mix_id = mixes.id
+          ) AS comments
+        FROM mixes
+        JOIN users ON mixes.user_id = users.id
+        JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
+        JOIN flavours ON mix_flavours.flavour_id = flavours.id
+        LEFT JOIN mix_likes ON mixes.id = mix_likes.mix_id`;
+
+      let conditions = [];
+      let params = [];
+
+      if (category) {
+        lowerCaseCategory = category.toLowerCase();
+        conditions.push(`EXISTS (SELECT 1 FROM categories c WHERE LOWER(c.name) = ? AND c.id IN 
+          (SELECT category_id FROM flavour_categories fc JOIN mix_flavours mf ON fc.flavour_id = 
+          mf.flavour_id WHERE mf.mix_id = mixes.id))`);
+        params.push(lowerCaseCategory);
+      }
+
+      if (flavour) {
+        lowerCaseFlavour = flavour.toLowerCase();
+        conditions.push(`EXISTS (SELECT 1 FROM flavours f WHERE LOWER(f.name) = ? AND f.id = 
+          mix_flavours.flavour_id)`);
+        params.push(lowerCaseFlavour);
+      }
+
+      if (conditions.length > 0) {
+        query += ` WHERE ${conditions.join(' AND ')}`;
+      }
+
+      query += `
+        GROUP BY mixes.id, mixes.name, users.username
+        HAVING categories IS NOT NULL`;
+
+      [mixes] = await connection.query(query, params);
+      
+      return mixes;
+    } catch (error) {
+      throw new Error(error);
+    }
+  };
+
+  getById = async ({ id }) => {
+    try {
+      const [mixes] = await connection.query(
+        `SELECT 
         mixes.id, 
         mixes.name AS mix_name, 
         users.username AS username, 
@@ -42,83 +120,26 @@ export class MixModel {
                 JOIN mix_flavours ON flavour_categories.flavour_id = mix_flavours.flavour_id
                 WHERE mix_flavours.mix_id = mixes.id
             ) AS unique_categories
-            JOIN categories c ON unique_categories.category_id = c.id`;
-
-      if (category) {
-        lowerCaseCategory = category.toLowerCase();
-        query += `
-            WHERE c.name = ?`;
-      }
-
-      query += `
-            ) AS categories
+            JOIN categories c ON unique_categories.category_id = c.id
+        ) AS categories,
+        (
+            SELECT JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    'id', mix_comments.id, 
+                    'user_id', mix_comments.user_id, 
+                    'content', mix_comments.content
+                )
+            )
+            FROM mix_comments
+            WHERE mix_comments.mix_id = mixes.id
+        ) AS comments
         FROM mixes
         JOIN users ON mixes.user_id = users.id
         JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
         JOIN flavours ON mix_flavours.flavour_id = flavours.id
-        LEFT JOIN mix_likes ON mixes.id = mix_likes.mix_id`;
-
-      if (flavour) {
-        lowerCaseFlavour = flavour.toLowerCase();
-        query += `
-        WHERE flavours.name = ?`;
-      }
-
-      query += `
-        GROUP BY mixes.id, mixes.name, users.username
-        HAVING categories IS NOT NULL`;
-
-      let params = [];
-      if (category && flavour) {
-        params = [lowerCaseCategory, lowerCaseFlavour];
-      } else if (category) {
-        params = [lowerCaseCategory];
-      } else if (flavour) {
-        params = [lowerCaseFlavour];
-      }
-
-      [mixes] = await connection.query(query, params);
-      
-      return mixes;
-    } catch (error) {
-      throw new Error(error);
-    }
-  };
-
-  getById = async ({ id }) => {
-    try {
-      const [mixes] = await connection.query(
-        `SELECT 
-      mixes.id, 
-      mixes.name AS mix_name, 
-      users.username AS username, 
-      (SELECT COUNT(*) 
-      FROM mix_likes 
-      WHERE mix_likes.mix_id = mixes.id
-      ) AS total_likes,
-      JSON_ARRAYAGG(
-          JSON_OBJECT(
-              'id', flavours.id, 
-              'name', flavours.name, 
-              'percentage', mix_flavours.percentage
-          )
-      ) AS flavours, 
-      (
-          SELECT JSON_ARRAYAGG(JSON_OBJECT('id', category_id, 'name', c.name)) 
-          FROM (
-              SELECT DISTINCT flavour_categories.category_id 
-              FROM flavour_categories 
-              JOIN mix_flavours ON flavour_categories.flavour_id = mix_flavours.flavour_id
-              WHERE mix_flavours.mix_id = mixes.id
-          ) AS unique_categories
-          JOIN categories c ON unique_categories.category_id = c.id
-      ) AS categories
-      FROM mixes
-      JOIN users ON mixes.user_id = users.id
-      JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
-      JOIN flavours ON mix_flavours.flavour_id = flavours.id
-      WHERE mixes.id = ?
-      GROUP BY mixes.id, mixes.name, users.username;`,
+        LEFT JOIN mix_likes ON mixes.id = mix_likes.mix_id
+        WHERE mixes.id = ?
+        GROUP BY mixes.id, mixes.name, users.username;`,
         [id]
       );
 
@@ -208,7 +229,18 @@ export class MixModel {
                   WHERE mix_flavours.mix_id = mixes.id
               ) AS unique_categories
               JOIN categories c ON unique_categories.category_id = c.id
-          ) AS categories
+          ) AS categories,
+          (
+              SELECT JSON_ARRAYAGG(
+                  JSON_OBJECT(
+                      'id', mix_comments.id, 
+                      'user_id', mix_comments.user_id, 
+                      'content', mix_comments.content
+                  )
+              )
+              FROM mix_comments
+              WHERE mix_comments.mix_id = mixes.id
+          ) AS comments
           FROM mixes
           JOIN users ON mixes.user_id = users.id
           JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
@@ -263,14 +295,21 @@ export class MixModel {
       );
 
       const [result2] = await connection.query(
+        "DELETE FROM mix_comments WHERE mix_id = ?;",
+        [id]
+      );
+
+      const [result3] = await connection.query(
         "DELETE FROM mixes WHERE id = ? AND user_id = ?;",
         [id, userId]
       );
 
+
       if (
         result0.affectedRows > 0 &&
         result1.affectedRows > 0 &&
-        result2.affectedRows > 0
+        result2.affectedRows > 0 &&
+        result3.affectedRows > 0
       ) {
         return true;
       } else {
@@ -377,7 +416,18 @@ export class MixModel {
                   WHERE mix_flavours.mix_id = mixes.id
               ) AS unique_categories
               JOIN categories c ON unique_categories.category_id = c.id
-          ) AS categories
+          ) AS categories,
+          (
+              SELECT JSON_ARRAYAGG(
+                  JSON_OBJECT(
+                      'id', mix_comments.id, 
+                      'user_id', mix_comments.user_id, 
+                      'content', mix_comments.content
+                  )
+              )
+              FROM mix_comments
+              WHERE mix_comments.mix_id = mixes.id
+          ) AS comments
           FROM mixes
           JOIN users ON mixes.user_id = users.id
           JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
