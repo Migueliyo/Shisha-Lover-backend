@@ -70,6 +70,15 @@ CREATE TABLE mix_likes (
     UNIQUE KEY unique_like (user_id, mix_id)
 );
 
+-- Creación de la tabla de comentarios de las mezclas
+CREATE TABLE mix_comments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    mix_id INT NOT NULL,
+    content TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (mix_id) REFERENCES mixes(id)
+);
 
 -- Creación de la tabla categorías
 CREATE TABLE categories (
@@ -141,6 +150,10 @@ INSERT INTO mix_flavours (mix_id, flavour_id, percentage) VALUES ((SELECT id FRO
 INSERT INTO mixes (user_id, name) VALUES ((SELECT id FROM users WHERE username = "migueliyo"), "Mezcla 2");
 INSERT INTO mix_flavours (mix_id, flavour_id, percentage) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 2"), (SELECT id FROM flavours WHERE name = "Maca Roll"), 50);
 INSERT INTO mix_flavours (mix_id, flavour_id, percentage) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 2"), (SELECT id FROM flavours WHERE name = "Jungle"), 50);
+
+INSERT INTO mix_comments (user_id, mix_id, content) VALUES ((SELECT id FROM users WHERE username = "migueliyo"), (SELECT id FROM mixes WHERE name = "Mezcla 1"), "Mi mezcla favorita");
+INSERT INTO mix_comments (user_id, mix_id, content) VALUES ((SELECT id FROM users WHERE username = "migueliyo"), (SELECT id FROM mixes WHERE name = "Mezcla 1"), "La mejor sin duda");
+
 
 INSERT INTO entries (user_id, title, description) VALUES ((SELECT id FROM users WHERE username = "migueliyo"), "Como mantener tu cachimba limpia con el paso del tiempo", 
 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In lectus metus, rutrum sed fringilla mattis, lacinia sed mauris. Aenean eget congue enim. Phasellus in quam a 
