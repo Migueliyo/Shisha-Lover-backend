@@ -172,6 +172,19 @@ Authorization: Bearer {...}
 ### Eliminar un like de una mezcla
 DELETE http://localhost:1234/api/mixes/1/like
 
+### Agregar un comentario a una mezcla
+POST http://localhost:1234/api/mixes/1/comment
+Authorization: Bearer {...}
+Content-Type: application/json
+
+{
+  "content": "De las mejores mezclas"
+}
+
+### Eliminar un comentario de una mezcla
+DELETE http://localhost:1234/api/mixes/1/comment/1
+Authorization: Bearer {...}
+
 ### Borrar una mezcla
 DELETE http://localhost:1234/api/mixes/3
 

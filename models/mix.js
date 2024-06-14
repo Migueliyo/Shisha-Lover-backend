@@ -47,7 +47,7 @@ export class MixModel {
               SELECT JSON_ARRAYAGG(
                   JSON_OBJECT(
                       'id', mix_comments.id, 
-                      'user_id', mix_comments.user_id, 
+                      'username', users.username, 
                       'content', mix_comments.content
                   )
               )
@@ -87,7 +87,7 @@ export class MixModel {
         HAVING categories IS NOT NULL`;
 
       [mixes] = await connection.query(query, params);
-      
+
       return mixes;
     } catch (error) {
       throw new Error(error);
@@ -126,7 +126,7 @@ export class MixModel {
             SELECT JSON_ARRAYAGG(
                 JSON_OBJECT(
                     'id', mix_comments.id, 
-                    'user_id', mix_comments.user_id, 
+                    'username', users.username, 
                     'content', mix_comments.content
                 )
             )
@@ -234,7 +234,7 @@ export class MixModel {
               SELECT JSON_ARRAYAGG(
                   JSON_OBJECT(
                       'id', mix_comments.id, 
-                      'user_id', mix_comments.user_id, 
+                      'username', users.username, 
                       'content', mix_comments.content
                   )
               )
@@ -303,7 +303,6 @@ export class MixModel {
         "DELETE FROM mixes WHERE id = ? AND user_id = ?;",
         [id, userId]
       );
-
 
       if (
         result0.affectedRows > 0 &&
@@ -421,7 +420,7 @@ export class MixModel {
               SELECT JSON_ARRAYAGG(
                   JSON_OBJECT(
                       'id', mix_comments.id, 
-                      'user_id', mix_comments.user_id, 
+                      'username', users.username, 
                       'content', mix_comments.content
                   )
               )
@@ -506,6 +505,7 @@ export class MixModel {
     }
   };
 
+  // Método para consultar un like de una mezcla
   checkLike = async ({ id, userId }) => {
     try {
       const [existingLike] = await connection.query(
@@ -514,6 +514,53 @@ export class MixModel {
       );
 
       return existingLike.length > 0;
+    } catch (error) {
+      throw new Error(error);
+    }
+  };
+
+  // Método para añadir un comentario de una mezcla
+  addComment = async ({ id, userId, input }) => {
+    const { content } = input;
+    try {
+      // Insertar el comentario
+      const [insertResult] = await connection.query(
+        "INSERT INTO mix_comments (user_id, mix_id, content) VALUES (?, ?, ?);",
+        [userId, id, content]
+      );
+
+      if (insertResult.affectedRows > 0) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      throw new Error(error);
+    }
+  };
+
+  // Método para eliminar un comentario de una mezcla
+  removeComment = async ({ id, userId, commentId }) => {
+    try {
+      const [existingLike] = await connection.query(
+        "SELECT * FROM mix_comments WHERE id = ? AND user_id = ? AND mix_id = ?;",
+        [commentId, userId, id]
+      );
+
+      if (existingLike.length === 0)
+        throw new Error("User already dont commented this mix")
+      
+      // Eliminar el comentario
+      const [deleteResult] = await connection.query(
+        "DELETE FROM mix_comments WHERE id = ? AND user_id = ? AND mix_id = ?;",
+        [commentId, userId, id]
+      );
+
+      if (deleteResult.affectedRows > 0) {
+        return true;
+      } else {
+        return false;
+      }
     } catch (error) {
       throw new Error(error);
     }

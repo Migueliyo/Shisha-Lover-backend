@@ -18,5 +18,8 @@ export const createMixRouter = ({ mixModel }) => {
   mixRouter.delete('/:id/like', mixController.removeLike);
   mixRouter.get("/:id/like", mixController.checkLike);
 
+  mixRouter.post('/:id/comment', mixController.addComment);
+  mixRouter.delete('/:id/comment/:commentId', mixController.removeComment);
+
   return mixRouter
 }

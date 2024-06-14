@@ -87,7 +87,6 @@ export class MixController {
   addLike = async (req, res) => {
     try {
       const { id } = req.params;
-      // const userId = 1;
       const userId = req.user.id;
       await this.mixModel.addLike({ id, userId });
       res.json({ error: false, message: "Like added successfully" });
@@ -99,7 +98,6 @@ export class MixController {
   removeLike = async (req, res) => {
     try {
       const { id } = req.params;
-      // const userId = 1;
       const userId = req.user.id;
       await this.mixModel.removeLike({ id, userId });
       res.json({ error: false, message: "Like removed successfully" });
@@ -115,6 +113,28 @@ export class MixController {
       const hasLiked = await this.mixModel.checkLike({ id, userId });
 
       res.json({ error: false, data: { hasLiked } });
+    } catch (error) {
+      res.status(400).json({ error: true, message: error.message });
+    }
+  };
+
+  addComment = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      await this.mixModel.addComment({ id, userId, input: req.body });
+      res.json({ error: false, message: "Comment added successfully" });
+    } catch (error) {
+      res.status(400).json({ erorr: true, message: error.message });
+    }
+  };
+
+  removeComment = async (req, res) => {
+    try {
+      const { id, commentId } = req.params;
+      const userId = req.user.id;
+      await this.mixModel.removeComment({ id, userId, commentId });
+      res.json({ error: false, message: "Comment removed successfully" });
     } catch (error) {
       res.status(400).json({ error: true, message: error.message });
     }

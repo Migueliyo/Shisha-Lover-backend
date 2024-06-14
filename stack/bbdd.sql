@@ -140,8 +140,9 @@ INSERT INTO flavour_categories (flavour_id, category_id) VALUES ((SELECT id FROM
 INSERT INTO flavour_categories (flavour_id, category_id) VALUES ((SELECT id FROM flavours WHERE name = "Maca Roll"), (SELECT id FROM categories WHERE name = "Afrutado"));
 INSERT INTO flavour_categories (flavour_id, category_id) VALUES ((SELECT id FROM flavours WHERE name = "Maca Roll"), (SELECT id FROM categories WHERE name = "Dulce"));
 
-INSERT INTO users (username, password, first_name, last_name, email, description) VALUES ("migueliyo", "$2b$10$kPuJL7S/2dsvt1pUdxoiqujpbHT9VUeSBAry2iYDdu/bafVspfjpu", "Miguel", 
-"Colmenero", "miguel@gmail.com", "Amante de las cachimbas");
+INSERT INTO users (username, password, first_name, last_name, email, description, twitter, instagram, facebook, youtube, reddit ) VALUES 
+("migueliyo", "$2b$10$kPuJL7S/2dsvt1pUdxoiqujpbHT9VUeSBAry2iYDdu/bafVspfjpu", "Miguel", "Colmenero", "miguel@gmail.com", "Amante de las cachimbas",
+"https://x.com/", "https://www.instagram.com/", "https://www.facebook.com/", "https://www.youtube.com/", "https://www.reddit.com/");
 
 INSERT INTO mixes (user_id, name) VALUES ((SELECT id FROM users WHERE username = "migueliyo"), "Mezcla 1");
 INSERT INTO mix_flavours (mix_id, flavour_id, percentage) VALUES ((SELECT id FROM mixes WHERE name = "Mezcla 1"), (SELECT id FROM flavours WHERE name = "Richman"), 50);
