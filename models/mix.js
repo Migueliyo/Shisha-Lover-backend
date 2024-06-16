@@ -48,6 +48,7 @@ export class MixModel {
                   JSON_OBJECT(
                       'id', mix_comments.id, 
                       'username', users.username, 
+                      'avatar', users.avatar,                      
                       'content', mix_comments.content
                   )
               )
@@ -127,6 +128,7 @@ export class MixModel {
                 JSON_OBJECT(
                     'id', mix_comments.id, 
                     'username', users.username, 
+                    'avatar', users.avatar,
                     'content', mix_comments.content
                 )
             )
@@ -235,6 +237,7 @@ export class MixModel {
                   JSON_OBJECT(
                       'id', mix_comments.id, 
                       'username', users.username, 
+                      'avatar', users.avatar,
                       'content', mix_comments.content
                   )
               )
@@ -421,6 +424,7 @@ export class MixModel {
                   JSON_OBJECT(
                       'id', mix_comments.id, 
                       'username', users.username, 
+                      'avatar', users.avatar,
                       'content', mix_comments.content
                   )
               )
