@@ -8,7 +8,7 @@ export class UserController {
   getAll = async (req, res) => {
     const { email, username } = req.query;
     const users = await this.userModel.getAll({ email, username });
-    if (users.length === 0) {
+    if (!users) {
       return res.status(404).json({ error: true, message: "No users found" });
     }
     res.json({ error: false, data: users });
