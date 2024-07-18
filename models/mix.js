@@ -23,9 +23,17 @@ export class MixModel {
           mixes.id, 
           mixes.name AS mix_name, 
           users.username AS username, 
-          (SELECT COUNT(*) 
-           FROM mix_likes 
-           WHERE mix_likes.mix_id = mixes.id) AS total_likes,
+          (
+            SELECT JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    'id', mix_likes.id, 
+                    'username', like_users.username
+                )
+            )
+            FROM mix_likes
+            JOIN users like_users ON mix_likes.user_id = like_users.id
+            WHERE mix_likes.mix_id = mixes.id
+          ) AS likes,
           JSON_ARRAYAGG(
               JSON_OBJECT(
                   'id', flavours.id, 
@@ -58,8 +66,7 @@ export class MixModel {
         FROM mixes
         JOIN users ON mixes.user_id = users.id
         JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
-        JOIN flavours ON mix_flavours.flavour_id = flavours.id
-        LEFT JOIN mix_likes ON mixes.id = mix_likes.mix_id`;
+        JOIN flavours ON mix_flavours.flavour_id = flavours.id`;
 
       let conditions = [];
       let params = [];
@@ -80,7 +87,7 @@ export class MixModel {
       }
 
       if (conditions.length > 0) {
-        query += ` WHERE ${conditions.join(' AND ')}`;
+        query += ` WHERE ${conditions.join(" AND ")}`;
       }
 
       query += `
@@ -102,10 +109,17 @@ export class MixModel {
         mixes.id, 
         mixes.name AS mix_name, 
         users.username AS username, 
-        (SELECT COUNT(*) 
-        FROM mix_likes 
-        WHERE mix_likes.mix_id = mixes.id
-        ) AS total_likes,
+        (
+          SELECT JSON_ARRAYAGG(
+              JSON_OBJECT(
+                  'id', mix_likes.id, 
+                  'username', like_users.username
+              )
+          )
+          FROM mix_likes
+          JOIN users like_users ON mix_likes.user_id = like_users.id
+          WHERE mix_likes.mix_id = mixes.id
+        ) AS likes,
         JSON_ARRAYAGG(
             JSON_OBJECT(
                 'id', flavours.id, 
@@ -139,7 +153,6 @@ export class MixModel {
         JOIN users ON mixes.user_id = users.id
         JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
         JOIN flavours ON mix_flavours.flavour_id = flavours.id
-        LEFT JOIN mix_likes ON mixes.id = mix_likes.mix_id
         WHERE mixes.id = ?
         GROUP BY mixes.id, mixes.name, users.username;`,
         [id]
@@ -211,10 +224,17 @@ export class MixModel {
           mixes.id, 
           mixes.name AS mix_name, 
           users.username AS username, 
-          (SELECT COUNT(*) 
-          FROM mix_likes 
-          WHERE mix_likes.mix_id = mixes.id
-          ) AS total_likes,
+          (
+            SELECT JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    'id', mix_likes.id, 
+                    'username', like_users.username
+                )
+            )
+            FROM mix_likes
+            JOIN users like_users ON mix_likes.user_id = like_users.id
+            WHERE mix_likes.mix_id = mixes.id
+          ) AS likes,
           JSON_ARRAYAGG(
               JSON_OBJECT(
                   'id', flavours.id, 
@@ -248,7 +268,6 @@ export class MixModel {
           JOIN users ON mixes.user_id = users.id
           JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
           JOIN flavours ON mix_flavours.flavour_id = flavours.id
-          LEFT JOIN mix_likes ON mixes.id = mix_likes.mix_id
           WHERE mixes.id = ?
           GROUP BY mixes.id, mixes.name, users.username;`,
           [mixId]
@@ -398,10 +417,17 @@ export class MixModel {
           mixes.id, 
           mixes.name AS mix_name, 
           users.username AS username, 
-          (SELECT COUNT(*) 
-          FROM mix_likes 
-          WHERE mix_likes.mix_id = mixes.id
-          ) AS total_likes,
+          (
+            SELECT JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    'id', mix_likes.id, 
+                    'username', like_users.username
+                )
+            )
+            FROM mix_likes
+            JOIN users like_users ON mix_likes.user_id = like_users.id
+            WHERE mix_likes.mix_id = mixes.id
+          ) AS likes,
           JSON_ARRAYAGG(
               JSON_OBJECT(
                   'id', flavours.id, 
@@ -435,7 +461,6 @@ export class MixModel {
           JOIN users ON mixes.user_id = users.id
           JOIN mix_flavours ON mixes.id = mix_flavours.mix_id
           JOIN flavours ON mix_flavours.flavour_id = flavours.id
-          LEFT JOIN mix_likes ON mixes.id = mix_likes.mix_id
           WHERE mixes.id = ?
           GROUP BY mixes.id, mixes.name, users.username;`,
           [id]
@@ -469,9 +494,10 @@ export class MixModel {
       );
 
       if (insertResult.affectedRows > 0) {
-        return true;
+        const likeId = insertResult.insertId;
+        return { success: true, likeId };
       } else {
-        return false;
+        return { success: false };
       }
     } catch (error) {
       throw new Error(error);
@@ -500,9 +526,9 @@ export class MixModel {
       );
 
       if (deleteResult.affectedRows > 0) {
-        return true;
+        return { success: true, likeId };
       } else {
-        return false;
+        return { success: false };
       }
     } catch (error) {
       throw new Error(error);
@@ -552,8 +578,8 @@ export class MixModel {
       );
 
       if (existingLike.length === 0)
-        throw new Error("User already dont commented this mix")
-      
+        throw new Error("User already dont commented this mix");
+
       // Eliminar el comentario
       const [deleteResult] = await connection.query(
         "DELETE FROM mix_comments WHERE id = ? AND user_id = ? AND mix_id = ?;",

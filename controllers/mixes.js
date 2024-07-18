@@ -88,10 +88,14 @@ export class MixController {
     try {
       const { id } = req.params;
       const userId = req.user.id;
-      await this.mixModel.addLike({ id, userId });
-      res.json({ error: false, message: "Like added successfully" });
+      const response = await this.mixModel.addLike({ id, userId });
+      if (response.success) {
+        res.json({ error: false, data: { id: response.likeId } });
+      } else {
+        res.json({ error: true, data: null });
+      }
     } catch (error) {
-      res.status(400).json({ erorr: true, message: error.message });
+      res.status(400).json({ error: true, message: error.message });
     }
   };
 
@@ -99,12 +103,16 @@ export class MixController {
     try {
       const { id } = req.params;
       const userId = req.user.id;
-      await this.mixModel.removeLike({ id, userId });
-      res.json({ error: false, message: "Like removed successfully" });
+      const response = await this.mixModel.removeLike({ id, userId });
+      if (response.success) {
+        res.json({ error: false, data: { id: response.likeId } });
+      } else {
+        res.json({ error: true, data: null });
+      }
     } catch (error) {
       res.status(400).json({ error: true, message: error.message });
     }
-  };
+  }; 
 
   checkLike = async (req, res) => {
     try {
